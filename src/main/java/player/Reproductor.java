@@ -1,4 +1,4 @@
-package src.main.player;
+package player;
 
 public class Reproductor {
         
