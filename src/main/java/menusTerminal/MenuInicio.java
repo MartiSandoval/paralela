@@ -1,17 +1,23 @@
 package menusTerminal;
 
 public class MenuInicio {
-    public MenuInicio() {
-        System.out.println("===============Netflix===============");
-        System.out.println("Seleccione una opción:");
+    
+    public void mostrar() {
+        System.out.println("\n===============Netflix===============\n");
+
         System.out.println("1. Ver recomendaciones");
         System.out.println("2. Seguir viendo");
-        System.out.println("3. Buscar pelicula"); // dentro de esta opción estará filtrar
+        System.out.println("3. Buscar pelicula"); 
         System.out.println("4. Salir del sistema");
+        System.out.print("Seleccione una opción: ");
     }
-
-    public static void main(String[] args) {
-        MenuInicio menu = new MenuInicio();
-        System.out.println(menu);
-    }
+    
+    public void mostrarBusqueda() {
+        System.out.println("\n===============Búsqueda y Filtrado===============\n");
+        System.out.println("1. Filtrar peliculas");
+        System.out.println("2. Buscar pelicula");
+        System.out.println("3. Volver al menú inicial"); 
+        System.out.print("Seleccione una opción: ");
+    
+}
 }
