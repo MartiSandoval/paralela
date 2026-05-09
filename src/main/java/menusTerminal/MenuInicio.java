@@ -1,4 +1,4 @@
-package src.main.menusTerminal;
+package menusTerminal;
 
 public class MenuInicio {
     public MenuInicio() {
