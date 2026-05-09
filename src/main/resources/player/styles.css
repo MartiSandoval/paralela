@@ -1,0 +1,180 @@
+/*
+ * styles.css — Tema oscuro estilo plataforma streaming
+ * Ubicación: src/main/resources/player/styles.css
+ */
+ 
+/* ══════════════════════════════════════════════
+   ROOT & FONDO
+════════════════════════════════════════════════ */
+.root {
+    -fx-background-color: #0a0a0f;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+ 
+/* ══════════════════════════════════════════════
+   LABELS
+════════════════════════════════════════════════ */
+.lbl-titulo {
+    -fx-text-fill: #f0f0f0;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 6, 0, 0, 1);
+}
+ 
+.lbl-tiempo {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 12px;
+    -fx-font-family: "Courier New", monospace;
+    -fx-min-width: 60px;
+    -fx-alignment: CENTER;
+}
+ 
+.lbl-estado {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 11px;
+    -fx-font-style: italic;
+}
+ 
+/* ══════════════════════════════════════════════
+   BOTONES DE CONTROL
+════════════════════════════════════════════════ */
+.btn-control {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-text-fill: #e8e8e8;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+    -fx-background-radius: 6px;
+    -fx-border-color: transparent;
+    -fx-padding: 6px 10px;
+    -fx-min-width: 38px;
+    -fx-min-height: 36px;
+}
+ 
+.btn-control:hover {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-text-fill: #ffffff;
+    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.3), 8, 0, 0, 0);
+}
+ 
+.btn-control:pressed {
+    -fx-background-color: rgba(229,62,62,0.35);
+    -fx-scale-x: 0.94;
+    -fx-scale-y: 0.94;
+}
+ 
+/* Botón Play/Pause destacado */
+.btn-play {
+    -fx-background-color: #e53e3e;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-min-width: 46px;
+    -fx-min-height: 40px;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.55), 12, 0, 0, 0);
+}
+ 
+.btn-play:hover {
+    -fx-background-color: #fc4f4f;
+    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.75), 18, 0, 0, 0);
+}
+ 
+.btn-play:pressed {
+    -fx-background-color: #b91c1c;
+    -fx-scale-x: 0.92;
+    -fx-scale-y: 0.92;
+}
+ 
+/* ══════════════════════════════════════════════
+   SLIDER DE PROGRESO
+════════════════════════════════════════════════ */
+.slider-progreso {
+    -fx-padding: 4 0;
+}
+ 
+.slider-progreso .track {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 4px;
+    -fx-pref-height: 5px;
+}
+ 
+.slider-progreso .thumb {
+    -fx-background-color: #e53e3e;
+    -fx-background-radius: 50%;
+    -fx-pref-width: 14px;
+    -fx-pref-height: 14px;
+    -fx-effect: dropshadow(gaussian, rgba(229,62,62,0.6), 6, 0, 0, 0);
+}
+ 
+.slider-progreso:hover .thumb {
+    -fx-pref-width: 17px;
+    -fx-pref-height: 17px;
+}
+ 
+.slider-progreso .track:hover {
+    -fx-background-color: rgba(255,255,255,0.35);
+}
+ 
+/* Barra de progreso llenada */
+.slider-progreso .colored-track {
+    -fx-background-color: #e53e3e;
+    -fx-background-radius: 4px;
+}
+ 
+/* ══════════════════════════════════════════════
+   SLIDER DE VOLUMEN
+════════════════════════════════════════════════ */
+.slider-volumen .track {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 3px;
+    -fx-pref-height: 4px;
+}
+ 
+.slider-volumen .thumb {
+    -fx-background-color: #cccccc;
+    -fx-background-radius: 50%;
+    -fx-pref-width: 12px;
+    -fx-pref-height: 12px;
+}
+ 
+.slider-volumen:hover .thumb {
+    -fx-background-color: #ffffff;
+}
+ 
+/* ══════════════════════════════════════════════
+   BUFFERING BAR
+════════════════════════════════════════════════ */
+.buffering-bar {
+    -fx-pref-height: 3px;
+    -fx-accent: #e53e3e;
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+ 
+.buffering-bar > .bar {
+    -fx-background-color: #e53e3e;
+    -fx-background-radius: 0;
+}
+ 
+/* ══════════════════════════════════════════════
+   SCROLL PANE (por si se usa en futuras vistas)
+════════════════════════════════════════════════ */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+ 
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+ 
+/* ══════════════════════════════════════════════
+   TOOLTIPS
+════════════════════════════════════════════════ */
+.tooltip {
+    -fx-background-color: #1a1a2e;
+    -fx-text-fill: #e8e8e8;
+    -fx-font-size: 11px;
+    -fx-background-radius: 4px;
+    -fx-padding: 4 8;
+    -fx-border-color: rgba(255,255,255,0.1);
+    -fx-border-radius: 4px;
+}
