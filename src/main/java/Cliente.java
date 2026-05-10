@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import menusTerminal.MenuInicio;
+import java.util.ArrayList;
 
 public class Cliente {
     private static final int PUERTO = 5000;
@@ -29,9 +30,37 @@ public class Cliente {
                 switch (opcion) {
                     case "1":
                         solicitud = new Peticion("PEDIR_RECOMENDACIONES", null);
+                        System.out.println("aaa");
+                        Peticion respuestaRecom = (Peticion) in.readObject();
+                        System.out.println("abbbb");
+                        System.out.println("\n--- TOP 10 RECOMENDACIONES ---\n");
+                        ArrayList<Pelicula> lista = (ArrayList<Pelicula>) respuestaRecom.getObjeto();
+
+                        for (int i = 0; i < lista.size(); i++) {
+                            System.out.println((i + 1) + "." + lista.get(i).toString());
+                        }
+                        System.out.println("0. Volver al menú principal");
+                        System.out.println("\nSeleccione la pelicual que desea ver: ");
+                            
+                        try {
+                            int num = Integer.parseInt(sc.nextLine());
+                            if ((num) > 0 && num <= lista.size()) {
+                                Pelicula peli = lista.get(num - 1);
+                                    
+                                out.writeObject(new Peticion("PEDIR_PELICULA", peli.getNombre()));
+                                Peticion resp = (Peticion) in.readObject();
+                                System.out.println("\n" + resp.getObjeto() + "\n");
+                            } else if (num == 0) {
+                                System.out.println("Volviendo al menú principal...");
+                            } else {
+                                System.out.println("Selección inválida");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Ingrese un número válido");
+                        }
                         break;
                     case "2":
-                        solicitud = new Peticion("SEGUIR_VIENDO", null); // Requeriría enviar el ID del usuario
+                        solicitud = new Peticion("SEGUIR_VIENDO", null); 
                         break;
                     case "3":
                         menu.mostrarBusqueda();
@@ -50,7 +79,7 @@ public class Cliente {
                             case "3": // volver atrás
                                 continue;
                             default:
-                                System.out.println("❌ Opción no válida. Intente de nuevo.\n");
+                                System.out.println("Opción no válida.\n");
                                 continue;
                                 
                         }
@@ -60,22 +89,20 @@ public class Cliente {
                         ejecutando = false;
                         break;
                     default:
-                        System.out.println("❌ Opción no válida. Intente de nuevo.\n");
+                        System.out.println("Opción no válida. Intente de nuevo.\n");
                         continue;
                 }
 
                 if (solicitud != null) {
-                    // Enviar petición al servidor
                     out.writeObject(solicitud);
                     
-                    // Esperar y leer la respuesta
                     Peticion respuesta = (Peticion) in.readObject();
-                    System.out.println("\n🎬 Respuesta del servidor: " + respuesta.getObjeto() + "\n");
+                    System.out.println("\nRespuesta del servidor: " + respuesta.getObjeto() + "\n");
                 }
             }
 
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("❌ Error de conexión con el servidor: " + e.getMessage());
+            System.err.println("Error de conexión con el servidor: " + e.getMessage());
         } finally {
             sc.close();
         }
