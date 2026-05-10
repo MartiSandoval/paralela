@@ -1,0 +1,3 @@
+No, no dentro de ESTE archivo, si no dentro de ESTA ubicacion
+
+paralela/src/main/resources/peliculas

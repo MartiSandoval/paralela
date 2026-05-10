@@ -2,7 +2,7 @@ package menusTerminal;
 
 public class MenuInicio {
     
-    public void mostrar() {
+    public void mostrarInicio() {
         System.out.println("\n===============Netflix===============\n");
 
         System.out.println("1. Ver recomendaciones");

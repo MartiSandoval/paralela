@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
+
 import menusTerminal.MenuInicio;
 
 public class Cliente {
@@ -21,7 +22,7 @@ public class Cliente {
             boolean ejecutando = true;
 
             while (ejecutando) {
-                menu.mostrar();
+                menu.mostrarInicio();
                 String opcion = sc.nextLine();
 
                 Peticion solicitud = null;
@@ -75,6 +76,7 @@ public class Cliente {
             }
 
         } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
             System.err.println("❌ Error de conexión con el servidor: " + e.getMessage());
         } finally {
             sc.close();
