@@ -1,6 +1,6 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.List;
+//import java.util.List;
 
 public class Cliente implements Runnable {
     private Socket socketCliente;
@@ -20,14 +20,15 @@ public class Cliente implements Runnable {
             String peticion = in.readUTF();
             System.out.println("Petición recibida: " + peticion);
 
-            if ("SOLICITAR_CATALOGO".equals(peticion)) {
-                // Aquí llama al método protegido que creamos en Catalogo
-                List<Pelicula> respuesta = baseDeDatos.getPeliculas();
-                
-                // Envío por red (Marshalling)
-                out.writeObject(respuesta);
-                out.flush();
+            if (peticion.equals("SOLICITAR_CATALOGO")) {
+                out.writeObject(baseDeDatos.getPeliculas());
+            } 
+            else if (peticion.startsWith("VER_DETALLE")) {
+                String titulo = peticion.split(";")[1];
+                Pelicula p = baseDeDatos.getPeliculaPorTitulo(titulo);
+                out.writeObject(p); // Enviamos el objeto individual
             }
+            out.flush();
 
         } catch (IOException e) {
             System.err.println("Fallo de conexión con el cliente: " + e.getMessage());

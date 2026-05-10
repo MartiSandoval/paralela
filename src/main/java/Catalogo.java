@@ -38,6 +38,15 @@ public class Catalogo {
             peliculas.add(p);
         }
     }
+
+    public synchronized Pelicula getPeliculaPorTitulo(String titulo) {
+        for (Pelicula p : peliculas) {
+            if (p.getTitulo().equalsIgnoreCase(titulo)) {
+                return p;
+            }
+        }
+        return null;
+    }
     
     public synchronized List<Pelicula> getPeliculas() {
         return new ArrayList<>(peliculas); 
