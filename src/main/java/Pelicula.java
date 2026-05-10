@@ -1,36 +1,29 @@
-import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
-public class Pelicula implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private int id;
-    private String titulo;
-    private String genero;
-    
-    public Pelicula(int id, String titulo, String genero) {
-        this.id = id;
+public class Pelicula {
+    String titulo;
+    ArrayList<String> director = new ArrayList<>();
+    Integer año;
+    ArrayList<String> generos = new ArrayList<>();
+    Path path; // Path de la película
+
+    public boolean getPelicula(String titulo, ArrayList<String> director, Integer año, ArrayList<String> generos) {
+        try {
+            this.path = Paths.get(Main.class.getResource("/peliculas/" + titulo + ".mp4").toURI());
+            if(this.path == null) {
+                throw new Exception("Archivo no encontrado para la película: " + titulo);
+            }
+        } catch (Exception e) {
+            System.err.println("Archivo no encontrado para la película: " + titulo);
+            e.printStackTrace();
+            return false;
+        }
         this.titulo = titulo;
-        this.genero = genero;
-    }
-
-    public int getId() {
-        return id;
-    }
-    public String getTitulo() {
-        return titulo;
-    }
-    public String getGenero() {
-        return genero;
-    }
-    public int setId(int id) {
-        return this.id = id;
-    }
-    public String setTitulo(String titulo) {
-        return this.titulo = titulo;
-    }
-    public String setGenero(String genero) {
-        return this.genero = genero;
-    }
-    public String toString() {
-        return "ID: " + id + ", Título: " + titulo + ", Género: " + genero;
+        this.director = director;
+        this.año = año;
+        this.generos = generos;
+        return true;
     }
 }
