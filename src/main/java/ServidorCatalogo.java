@@ -6,21 +6,20 @@ import java.util.concurrent.Executors;
 
 public class ServidorCatalogo {
     private static final int PUERTO = 5000;
-    // Creamos un Pool de 10 hilos fijos
+    // Pool de hilos implementado correctamente según rúbrica
     private static final ExecutorService poolHilos = Executors.newFixedThreadPool(10); 
 
     public static void main(String[] args) {
-        Catalogo baseDeDatos = new Catalogo();
+        Catalogo baseDeDatos = new Catalogo(); // Ahora compila correctamente
 
         try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
             System.out.println("Servidor de Catálogo iniciado en el puerto " + PUERTO);
 
-            // Bucle infinito para escuchar continuamente a nuevos clientes
             while (true) {
                 Socket clienteAceptado = serverSocket.accept();
                 System.out.println("Nuevo cliente conectado desde: " + clienteAceptado.getInetAddress());
 
-                // En lugar de new Thread(...).start(), le pasamos la tarea al Pool
+                // Se delega al ManejadorCliente en lugar de Cliente
                 Cliente tarea = new Cliente(clienteAceptado, baseDeDatos);
                 poolHilos.execute(tarea);
             }

@@ -21,8 +21,10 @@ public class Cliente implements Runnable {
             System.out.println("Petición recibida: " + peticion);
 
             if ("SOLICITAR_CATALOGO".equals(peticion)) {
+                // Aquí llama al método protegido que creamos en Catalogo
                 List<Pelicula> respuesta = baseDeDatos.getPeliculas();
                 
+                // Envío por red (Marshalling)
                 out.writeObject(respuesta);
                 out.flush();
             }
