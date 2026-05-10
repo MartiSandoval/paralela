@@ -1,3 +1,5 @@
-Matrix;Lana Wachowski,Lilly Wachoswski;1999;Accion,Ciencia Ficcion
-Shrek;Andrew Adamson,Vicky Jenson;2001;Comedia,Fantasia
-Inception;Christopher Nolan;2010;Ciencia Ficcion,Accion
+Bee movie;Steve Hicker, Simon J. Smith;2007;Infantil,Comedia
+La era del hielo;Chris Wedge;2002;Infantil,Comedia
+Super Mario;Aaron Horvath,Michael Jelenic;2023;Infantil,Comedia
+Minecraft;Jared Hess;2025;Aventura,Fantasia
+Kpop Demon Hunters;Maggie Kang,Chris Appelhans;2025;Musica,Accion

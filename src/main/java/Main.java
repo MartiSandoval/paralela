@@ -5,9 +5,9 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
-        ArrayList<String> m = new ArrayList<>();;
-        try (InputStream is = Main.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
-             BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+        ArrayList<String> m = new ArrayList<>();
+        try(InputStream is = Main.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             String line;
             while((line = br.readLine()) != null) { m.add(line); }
         } catch (Exception e) {
@@ -16,7 +16,6 @@ public class Main {
         }
 
         Catalogo c = new Catalogo(m, m.size());
-
         ArrayList<Pelicula> p = c.peliculas;
         for(Pelicula pel : p) {
             System.out.println("Título: " + pel.titulo);
@@ -26,6 +25,5 @@ public class Main {
             System.out.println("Path: " + pel.path);
             System.out.println();
         }
-
     }
 }

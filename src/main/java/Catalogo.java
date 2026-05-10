@@ -18,7 +18,10 @@ public class Catalogo {
             ArrayList<String> generos = new ArrayList<>();
             for(String g : datos[3].split(",")) { generos.add(g); }
             
-            peliculas.add(new Pelicula(titulo, director, año, generos));
+            Pelicula p = new Pelicula();
+            if(p.getPelicula(titulo, director, año, generos)) {
+                peliculas.add(p);
+            }
         }
     }
 }

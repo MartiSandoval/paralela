@@ -7,18 +7,23 @@ public class Pelicula {
     ArrayList<String> director = new ArrayList<>();
     Integer año;
     ArrayList<String> generos = new ArrayList<>();
-    Path path; // Archivo de la película
+    Path path; // Path de la película
 
-    public Pelicula(String titulo, ArrayList<String> director, Integer año, ArrayList<String> generos) {
+    public boolean getPelicula(String titulo, ArrayList<String> director, Integer año, ArrayList<String> generos) {
+        try {
+            this.path = Paths.get(Main.class.getResource("/peliculas/" + titulo + ".mp4").toURI());
+            if(this.path == null) {
+                throw new Exception("Archivo no encontrado para la película: " + titulo);
+            }
+        } catch (Exception e) {
+            System.err.println("Archivo no encontrado para la película: " + titulo);
+            e.printStackTrace();
+            return false;
+        }
         this.titulo = titulo;
         this.director = director;
         this.año = año;
         this.generos = generos;
-        try {
-            this.path = Paths.get(Main.class.getResource("/peliculas/" + titulo + ".mp4").toURI());
-        } catch (Exception e) {
-            System.out.println("Recurso no encontrado para la película: " + titulo);
-            e.printStackTrace();
-        }
+        return true;
     }
 }
