@@ -16,7 +16,7 @@
         <!--
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         -->
-        <javafx.version>26.0.1</javafx.version> <!--Ultima version de javafx-->
+        <javafx.version>21.0.2</javafx.version> <!--Ultima version de javafx-->
         <vlcj.version>4.12.0</vlcj.version> <!--Antepenultima version de vlcj-->
     </properties>
 

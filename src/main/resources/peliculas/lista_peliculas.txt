@@ -1,5 +1,5 @@
-Bee movie;Steve Hicker, Simon J. Smith;2007;Infantil,Comedia
-La era del hielo;Chris Wedge;2002;Infantil,Comedia
-Super Mario;Aaron Horvath,Michael Jelenic;2023;Infantil,Comedia
-Minecraft;Jared Hess;2025;Aventura,Fantasia
-Kpop Demon Hunters;Maggie, KangChris Appelhans;2025;Musica,Accion
+Bee movie;Steve Hicker, Simon J. Smith;2007;Infantil,Comedia;C:\Users\julia\OneDrive\Escritorio\paralela y distrbuida\paralela\src\main\resources\peliculas\Bee movie.mp4
+La era del hielo;Chris Wedge;2002;Infantil,Comedia;C:\Users\julia\OneDrive\Escritorio\paralela y distrbuida\paralela\src\main\resources\peliculas\La era del hielo.mp4
+Super Mario;Aaron Horvath,Michael Jelenic;2023;Infantil,Comedia;C:\Users\julia\OneDrive\Escritorio\paralela y distrbuida\paralela\src\main\resources\peliculas\Super Mario.mp4
+Minecraft;Jared Hess;2025;Aventura,Fantasia;C:\Users\julia\OneDrive\Escritorio\paralela y distrbuida\paralela\src\main\resources\peliculas\Minecraft.mp4
+Kpop Demon Hunters;Maggie, KangChris Appelhans;2025;Musica,Accion;C:\Users\julia\OneDrive\Escritorio\paralela y distrbuida\paralela\src\main\resources\peliculas\Kpop Demon Hunters.mp4

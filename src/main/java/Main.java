@@ -34,7 +34,6 @@ public class Main {
     }
 
     private static void gestionarDetalle(String titulo) {
-        // 1. Pedir información detallada al servidor
         Pelicula p = solicitarInfoPelicula(titulo);
 
         if (p != null) {
@@ -82,7 +81,13 @@ public class Main {
 
     private static void iniciarStreaming(String rutaVideo) {
         new Thread(() -> {
-            try (DatagramSocket socketUDP = new DatagramSocket()) {
+            File archivoBuffer = new File("buffer_temporal.mp4");
+            
+            try (DatagramSocket socketUDP = new DatagramSocket();
+                
+                 FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
+                
+                socketUDP.setSoTimeout(3000);
 
                 String mensaje = "PLAY;" + rutaVideo;
                 byte[] data = mensaje.getBytes();
@@ -90,16 +95,30 @@ public class Main {
                                             InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
                 socketUDP.send(peticion);
 
-                System.out.println("Reproduciendo: " + rutaVideo + "...");
-                byte[] buffer = new byte[64000];
+                System.out.println("Iniciando descarga al búfer...");
+                byte[] buffer = new byte[640000];
+                int paquetesRecibidos = 0;
+                boolean reproductorIniciado = false;
                 
                 while (true) {
                     DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
                     socketUDP.receive(paquete);
-                    System.out.print(".");
+                    
+                    // Escribimos los bytes recibidos en el archivo
+                    fos.write(paquete.getData(), 0, paquete.getLength());
+                    fos.flush(); 
+
+                    paquetesRecibidos++;
+
+                    // Pre-buffering: Esperamos 10 paquetes para asegurar que el archivo tenga cabecera
+                    if (paquetesRecibidos == 10 && !reproductorIniciado) {
+                        System.out.println("Búfer inicial listo. Abriendo reproductor JavaFX...");
+                        ReproductorFX.iniciar(archivoBuffer.getAbsolutePath());
+                        reproductorIniciado = true;
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("\nFin del streaming o error de red.");
+                System.err.println("\nFin del streaming UDP o error de red.");
             }
         }).start();
     }
