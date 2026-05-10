@@ -1,7 +1,10 @@
+import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-public class Pelicula {
+public class Pelicula implements Serializable{
+    private static final long serialVersionUID = 1L;
+
     String titulo;
     ArrayList<String> director = new ArrayList<>();
     Integer año;
@@ -25,5 +28,20 @@ public class Pelicula {
         this.año = año;
         this.generos = generos;
         return true;
+    }
+
+    public String getTitulo() { return titulo; }
+
+    public ArrayList<String> getDirector() { return director; }
+
+    public Integer getAño() { return año; }
+
+    public ArrayList<String> getGeneros() { return generos; }
+
+    public String getPath() { return path; }
+
+    @Override
+    public String toString() {
+        return titulo + " (" + año + ") - " + String.join(", ", generos);
     }
 }
