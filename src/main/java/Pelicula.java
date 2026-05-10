@@ -1,6 +1,3 @@
-import java.io.File;
-import java.net.URI;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -18,9 +15,7 @@ public class Pelicula {
         this.año = año;
         this.generos = generos;
         try {
-            String s = Main.class.getResourceAsStream("/peliculas/" + titulo + ".mp4").toString();
-            System.out.println(s);
-            this.path = Paths.get(s);
+            this.path = Paths.get(Main.class.getResource("/peliculas/" + titulo + ".mp4").toURI());
         } catch (Exception e) {
             System.out.println("Recurso no encontrado para la película: " + titulo);
             e.printStackTrace();

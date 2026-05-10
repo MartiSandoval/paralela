@@ -14,17 +14,12 @@ public class Main {
             e.printStackTrace();
             System.err.println("Error al cargar archivo de peliculas.");
         }
-        
-        /*if(!m.isEmpty()) {
-            System.out.println("Lista peliculas:");
-            m.forEach(System.out::println);
-        }*/
 
         Catalogo c = new Catalogo(m, m.size());
 
         ArrayList<Pelicula> p = c.peliculas;
         for(Pelicula pel : p) {
-            System.out.println("Pelicula: " + pel.titulo);
+            System.out.println("Título: " + pel.titulo);
             System.out.println("Director: " + String.join(", ", pel.director));
             System.out.println("Año: " + pel.año);
             System.out.println("Géneros: " + String.join(", ", pel.generos));
