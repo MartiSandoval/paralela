@@ -3,3 +3,7 @@ La era del hielo;Chris Wedge;2002;Infantil,Comedia
 Super Mario;Aaron Horvath,Michael Jelenic;2023;Infantil,Comedia
 Minecraft;Jared Hess;2025;Aventura,Fantasia
 Kpop Demon Hunters;Maggie Kang,Chris Appelhans;2025;Musica,Accion
+Shrek;Andrew Adamson,Vicky Jenson;2001;Comedia,Fantasia
+Joker;Todd Phillips;2019;Crimen,Supenso
+Bob Esponja;Stephen Hillenburg;2004;Infantil,Aventura
+Scooby Doo;Raja Gosnell;2002;Comedia,Aventura
