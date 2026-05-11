@@ -70,7 +70,7 @@
     <profiles>
         <!-- PERFIL SERVIDOR: mvn exec:java -Pservidor -->
         <profile>
-            <id>servidor</id>
+            <id>catalogo</id>
             <build>
                 <plugins>
                     <plugin>
