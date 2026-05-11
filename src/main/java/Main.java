@@ -1,33 +1,19 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     private static final String IP_SERVIDOR = "127.0.0.1";
-    //private static final int PUERTO_UDP_SERVER = 6000;
+    private static final int PUERTO_UDP_SERVER = 6000;
     private static Scanner sc = new Scanner(System.in);
     public static void main(String[] args) {
-        /*
-        ArrayList<String> m = new ArrayList<>();
-        try(InputStream is = Main.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
-            BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-            String line;
-            while((line = br.readLine()) != null) { m.add(line); }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error al cargar archivo de peliculas.");
-        }
-
-        Catalogo c = new Catalogo(m, m.size());
-        ArrayList<Pelicula> p = c.peliculas;
-        if(p.isEmpty()) {
-            System.out.println("No se encontraron películas en el catálogo.");
-            return;
-        }
-        */
-
         ArrayList<Pelicula> p = solicitarCatalogo();
         if(p == null || p.isEmpty()) {
             System.err.println("No se pudo conectar a servidorCatalogo\nSaliendo del sistema...");
@@ -79,8 +65,7 @@ public class Main {
             int opcion = sc.nextInt();
             if (opcion == 1) {
                 System.out.println("Reproduciendo: " + p.getTitulo());
-                System.out.println(p.getPath());
-                App.lanzar(p.getPath());
+                iniciarStreaming(p.getPath());
             }
         }
     }
@@ -115,49 +100,49 @@ public class Main {
         }
     }
 
-    /*
     private static void iniciarStreaming(String rutaVideo) {
-        new Thread(() -> {
-            File archivoBuffer = new File("buffer_temporal.mp4");
+        File archivoBuffer = new File("buffer_temporal.mp4");
+        
+        try (DatagramSocket socketUDP = new DatagramSocket();
+             FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
             
-            try (DatagramSocket socketUDP = new DatagramSocket();
+            socketUDP.setSoTimeout(2000); 
+
+            String mensaje = "PLAY;" + rutaVideo;
+            byte[] data = mensaje.getBytes();
+            DatagramPacket peticion = new DatagramPacket(data, data.length, 
+                                        InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
+            socketUDP.send(peticion);
+
+            System.out.println("Iniciando recepción de datos por UDP...");
+            byte[] buffer = new byte[640000];
+            int paquetesRecibidos = 0;
+            
+            while (true) {
+                DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
+                socketUDP.receive(paquete);
                 
-                 FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
-                
-                socketUDP.setSoTimeout(3000);
+                fos.write(paquete.getData(), 0, paquete.getLength());
+                fos.flush(); 
 
-                String mensaje = "PLAY;" + rutaVideo;
-                byte[] data = mensaje.getBytes();
-                DatagramPacket peticion = new DatagramPacket(data, data.length, 
-                                            InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
-                socketUDP.send(peticion);
-
-                System.out.println("Iniciando descarga al búfer...");
-                byte[] buffer = new byte[640000];
-                int paquetesRecibidos = 0;
-                boolean reproductorIniciado = false;
-                
-                while (true) {
-                    DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
-                    socketUDP.receive(paquete);
-                    
-                    // Escribimos los bytes recibidos en el archivo
-                    fos.write(paquete.getData(), 0, paquete.getLength());
-                    fos.flush(); 
-
-                    paquetesRecibidos++;
-
-                    // Pre-buffering: Esperamos 10 paquetes para asegurar que el archivo tenga cabecera
-                    if (paquetesRecibidos == 10 && !reproductorIniciado) {
-                        System.out.println("Búfer inicial listo. Abriendo reproductor JavaFX...");
-                        ReproductorFX.iniciar(archivoBuffer.getAbsolutePath());
-                        reproductorIniciado = true;
-                    }
+                paquetesRecibidos++;
+                if (paquetesRecibidos % 50 == 0) {
+                    System.out.println("Recibiendo fragmentos... (" + paquetesRecibidos + " paquetes)");
                 }
-            } catch (Exception e) {
-                System.err.println("\nFin del streaming UDP o error de red.");
             }
-        }).start();
+            
+        } catch (java.net.SocketTimeoutException e) {
+            System.out.println("\nTransferencia completada. Guardando archivo en disco...");
+            
+            try {
+                Thread.sleep(500); 
+            } catch (InterruptedException ex) {}
+
+            System.out.println("Abriendo el reproductor JavaFX...");
+            App.lanzar(archivoBuffer.getAbsolutePath());
+            
+        } catch (Exception e) {
+            System.err.println("\nError crítico en la red UDP: " + e.getMessage());
+        }
     }
-    */
 }
