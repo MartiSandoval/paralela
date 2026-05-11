@@ -10,17 +10,13 @@
     <version>1.0</version>
 
     <properties>
-        <!--Java 21-->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <!--
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        -->
-        <javafx.version>21.0.2</javafx.version> <!--Ultima version de javafx-->
+        <javafx.version>21.0.2</javafx.version>
     </properties>
 
     <dependencies>
-        <dependency> <!--Dependencias javafx-->
+        <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
@@ -55,15 +51,78 @@
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running -->
-                        <!-- Usage: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>App</mainClass>
+                            <mainClass>Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!-- Plugin para ejecutar clases sin JavaFX (servidor) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- PERFIL SERVIDOR: mvn exec:java -Pservidor -->
+        <profile>
+            <id>servidor</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <mainClass>ServidorCatalogo</mainClass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- PERFIL SERVIDOR VIDEO: mvn exec:java -Pvideo -->
+        <profile>
+            <id>video</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <mainClass>ServidorVideo</mainClass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- PERFIL CLIENTE: mvn exec:java -Pcliente -->
+        <profile>
+            <id>cliente</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <configuration>
+                            <mainClass>Main</mainClass>
+                            <jvmArgs>
+                                <jvmArg>--module-path</jvmArg>
+                                <jvmArg>${settings.localRepository}/org/openjfx/javafx-controls/${javafx.version}/javafx-controls-${javafx.version}-win.jar${path.separator}${settings.localRepository}/org/openjfx/javafx-fxml/${javafx.version}/javafx-fxml-${javafx.version}-win.jar${path.separator}${settings.localRepository}/org/openjfx/javafx-media/${javafx.version}/javafx-media-${javafx.version}-win.jar${path.separator}${settings.localRepository}/org/openjfx/javafx-base/${javafx.version}/javafx-base-${javafx.version}-win.jar${path.separator}${settings.localRepository}/org/openjfx/javafx-graphics/${javafx.version}/javafx-graphics-${javafx.version}-win.jar</jvmArg>
+                                <jvmArg>--add-modules</jvmArg>
+                                <jvmArg>javafx.controls,javafx.fxml,javafx.media</jvmArg>
+                            </jvmArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
