@@ -36,18 +36,21 @@ public class Main {
 
         boolean ejecutar = true;
         while (ejecutar) {
-            System.out.println("\n=========================================================\r\n" + //
-                                "                         Netflix\r\n" + //
-                                "=========================================================");
+            System.out.println("\n=========================================================");
+            System.out.println("                         Netflix");
+            System.out.println("=========================================================");
+            
+            System.out.println("----------------- Catálogo de películas ----------------");
             for(int i = 0; i < p.size(); i++) {
                 Pelicula pel = p.get(i);
                 System.out.println((i + 1) + ". " + pel.titulo);
             }
-            System.out.println("0. Salir");
-            
+            System.out.println("---------------------------------------------------------");
+            System.out.println("0. Salir de la aplicación");
             System.out.print("\nSeleccione una opción: ");
             int op = sc.nextInt();
             if (op == 0) { 
+                System.out.println("Saliendo del sistema...");
                 ejecutar = false; 
             } else if (op > 0 && op <= p.size()) {
                 System.out.println(p.get(op - 1).getTitulo());
@@ -63,15 +66,15 @@ public class Main {
             return;
         }
         if (p != null) {
-            System.out.println("\n------------------------------");
+            System.out.println("\n-----Detalles Pelicula-----");
             System.out.println("TÍTULO: " + p.getTitulo());
             System.out.println("AÑO: " + p.getAño());
             System.out.println("DIRECTORES: " + String.join(", ", p.getDirector()));
             System.out.println("GÉNEROS: " + String.join(", ", p.getGeneros()));
-            System.out.println("------------------------------");
-            System.out.println("1. Reproducir Película");
-            System.out.println("2. Volver al Catálogo");
-            System.out.print("Selección: ");
+            System.out.println("---------------------------\n");
+            System.out.println("1. Reproducir película");
+            System.out.println("2. Volver al catálogo");
+            System.out.print("Seleccione una opción: ");
             
             int opcion = sc.nextInt();
             if (opcion == 1) {

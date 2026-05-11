@@ -1,4 +1,4 @@
-package menusTerminal;
+/*package menusTerminal;
 
 public class MenuInicio {
     
@@ -20,4 +20,4 @@ public class MenuInicio {
         System.out.print("Seleccione una opción: ");
     
 }
-}
+}*/
