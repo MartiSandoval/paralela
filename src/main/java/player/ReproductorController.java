@@ -68,8 +68,8 @@ public class ReproductorController {
         mediaPlayer.setOnEndOfMedia(() -> {
             isPlaying = false;
             btnPlay.setText("Reproducir");
-            mediaPlayer.pause();
             mediaPlayer.seek(Duration.ZERO);
+            mediaPlayer.pause();
             slider.setValue(0);
         });
 
