@@ -1,41 +1,67 @@
-import java.io.*;
-import java.net.*;
-import java.util.List;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
     private static final String IP_SERVIDOR = "127.0.0.1";
-    private static final int PUERTO_UDP_SERVER = 6000;
+    //private static final int PUERTO_UDP_SERVER = 6000;
     private static Scanner sc = new Scanner(System.in);
-
     public static void main(String[] args) {
+        /*
+        ArrayList<String> m = new ArrayList<>();
+        try(InputStream is = Main.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            String line;
+            while((line = br.readLine()) != null) { m.add(line); }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error al cargar archivo de peliculas.");
+        }
+
+        Catalogo c = new Catalogo(m, m.size());
+        ArrayList<Pelicula> p = c.peliculas;
+        if(p.isEmpty()) {
+            System.out.println("No se encontraron películas en el catálogo.");
+            return;
+        }
+        */
+
+        ArrayList<Pelicula> p = solicitarCatalogo();
+        if(p == null || p.isEmpty()) {
+            System.err.println("No se pudo conectar a servidorCatalogo\nSaliendo del sistema...");
+            return;
+        }
+
         boolean ejecutar = true;
         while (ejecutar) {
             System.out.println("\n=========================================================\r\n" + //
                                 "                         Netflix\r\n" + //
                                 "=========================================================");
-            List<Pelicula> lista = solicitarLista();
-            
-            if (lista == null) break;
-
-            for (int i = 0; i < lista.size(); i++) {
-                System.out.println((i + 1) + ". " + lista.get(i).getTitulo());
+            for(int i = 0; i < p.size(); i++) {
+                Pelicula pel = p.get(i);
+                System.out.println((i + 1) + ". " + pel.titulo);
             }
             System.out.println("0. Salir");
             
             System.out.print("\nSeleccione una opción: ");
             int op = sc.nextInt();
-
-            if (op == 0) ejecutar = false;
-            else if (op > 0 && op <= lista.size()) {
-                gestionarDetalle(lista.get(op - 1).getTitulo());
+            if (op == 0) { 
+                ejecutar = false; 
+            } else if (op > 0 && op <= p.size()) {
+                System.out.println(p.get(op - 1).getTitulo());
+                gestionarDetalle(p.get(op - 1).getTitulo());
             }
         }
     }
 
     private static void gestionarDetalle(String titulo) {
         Pelicula p = solicitarInfoPelicula(titulo);
-
+        if(p==null) {
+            System.out.println("No se pudo obtener la información de la película.");
+            return;
+        }
         if (p != null) {
             System.out.println("\n------------------------------");
             System.out.println("TÍTULO: " + p.getTitulo());
@@ -49,36 +75,44 @@ public class Main {
             
             int opcion = sc.nextInt();
             if (opcion == 1) {
-                iniciarStreaming(p.getPath());
+                System.out.println("Reproduciendo: " + p.getTitulo());
+                System.out.println(p.getPath());
+                App.lanzar(p.getPath());
             }
         }
     }
 
-    private static List<Pelicula> solicitarLista() {
-        try (Socket s = new Socket(IP_SERVIDOR, 5000);
-             ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
-            out.writeUTF("SOLICITAR_CATALOGO");
-            out.flush();
-            return (List<Pelicula>) in.readObject();
-        } catch (Exception e) {
-            System.err.println("Error al conectar con servidor.");
-            return null;
-        }
-    }
-
     private static Pelicula solicitarInfoPelicula(String titulo) {
-        try (Socket s = new Socket(IP_SERVIDOR, 5000);
-             ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+        try(Socket s = new Socket(IP_SERVIDOR, 5000);
+            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
             out.writeUTF("VER_DETALLE;" + titulo);
             out.flush();
+            
             return (Pelicula) in.readObject();
+        } catch (Exception e) {
+            System.err.println("Error al solicitar información de la película: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ArrayList<Pelicula> solicitarCatalogo() {
+        try(Socket s = new Socket(IP_SERVIDOR, 5000);
+            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+            out.writeUTF("SOLICITAR_CATALOGO");
+            out.flush();
+            return (ArrayList<Pelicula>) in.readObject();
         } catch (Exception e) {
             return null;
         }
     }
 
+    /*
     private static void iniciarStreaming(String rutaVideo) {
         new Thread(() -> {
             File archivoBuffer = new File("buffer_temporal.mp4");
@@ -122,4 +156,5 @@ public class Main {
             }
         }).start();
     }
+    */
 }

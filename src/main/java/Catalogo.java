@@ -51,5 +51,15 @@ public class Catalogo {
     public synchronized List<Pelicula> getPeliculas() {
         return new ArrayList<>(peliculas); 
     }
-    
+
+    public synchronized Pelicula getPeliculaPorTitulo(String titulo) {
+        for (Pelicula p : peliculas) {
+            if (p.getTitulo().equalsIgnoreCase(titulo)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<Pelicula> getPeliculas() { return peliculas; }
 }

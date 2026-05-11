@@ -16,7 +16,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         -->
         <javafx.version>21.0.2</javafx.version> <!--Ultima version de javafx-->
-        <vlcj.version>4.12.0</vlcj.version> <!--Antepenultima version de vlcj-->
     </properties>
 
     <dependencies>
@@ -37,26 +36,6 @@
             <artifactId>javafx-media</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-swing</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <!-- ── VLCJ (bindings Java para libVLC) ────────────────────────── -->
-        <dependency>
-            <groupId>uk.co.caprica</groupId>
-            <artifactId>vlcj</artifactId>
-            <version>${vlcj.version}</version>
-        </dependency>
-
-        <!-- ── VLCJ-JavaFX (ImageViewVideoSurface) ──────────────────────── -->
-        <dependency>
-            <groupId>uk.co.caprica</groupId>
-            <artifactId>vlcj-javafx</artifactId>
-            <version>${vlcj.javafx.version}</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -97,26 +76,7 @@
                         <phase>package</phase>
                         <goals><goal>shade</goal></goals>
                         <configuration>
-                            <transformers>
-                                <transformer implementation=
-                                    "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>Main</mainClass>
-                                </transformer>
-                                <!-- Fusiona los META-INF/services de todos los JARs
-                                     (necesario para que vlcj encuentre sus providers) -->
-                                <transformer implementation=
-                                    "org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
+                            <mainClass>App</mainClass>
                         </configuration>
                     </execution>
                 </executions>
