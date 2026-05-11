@@ -1,34 +1,160 @@
-import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
-import menusTerminal.MenuInicio;
-import player.Reproductor;
-
 public class Main {
+    private static final String IP_SERVIDOR = "127.0.0.1";
+    //private static final int PUERTO_UDP_SERVER = 6000;
+    private static Scanner sc = new Scanner(System.in);
     public static void main(String[] args) {
-        System.out.println("\033[2J\033[1;1H");
-        MenuInicio menu = new MenuInicio();
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Escribe 'test1' o 'exit' para salir.");
-        
-        while (true) {
-            String ctrl = sc.nextLine();
-            if(ctrl.equalsIgnoreCase("test1")) {
-                reproducir("src/main/resources/test1.mp4");
-            } else if(ctrl.equalsIgnoreCase("exit")) {
-                System.out.println("Saliendo...");
-                break;
-            } else {
-                System.out.println("Opción no reconocida. Intente de nuevo.");
+        /*
+        ArrayList<String> m = new ArrayList<>();
+        try(InputStream is = Main.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
+            BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+            String line;
+            while((line = br.readLine()) != null) { m.add(line); }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error al cargar archivo de peliculas.");
+        }
+
+        Catalogo c = new Catalogo(m, m.size());
+        ArrayList<Pelicula> p = c.peliculas;
+        if(p.isEmpty()) {
+            System.out.println("No se encontraron películas en el catálogo.");
+            return;
+        }
+        */
+
+        ArrayList<Pelicula> p = solicitarCatalogo();
+        if(p == null || p.isEmpty()) {
+            System.err.println("No se pudo conectar a servidorCatalogo\nSaliendo del sistema...");
+            return;
+        }
+
+        boolean ejecutar = true;
+        while (ejecutar) {
+            System.out.println("\n=========================================================\r\n" + //
+                                "                         Netflix\r\n" + //
+                                "=========================================================");
+            for(int i = 0; i < p.size(); i++) {
+                Pelicula pel = p.get(i);
+                System.out.println((i + 1) + ". " + pel.titulo);
+            }
+            System.out.println("0. Salir");
+            
+            System.out.print("\nSeleccione una opción: ");
+            int op = sc.nextInt();
+            if (op == 0) { 
+                ejecutar = false; 
+            } else if (op > 0 && op <= p.size()) {
+                System.out.println(p.get(op - 1).getTitulo());
+                gestionarDetalle(p.get(op - 1).getTitulo());
             }
         }
-        
-        sc.close();
     }
 
-    public static void reproducir(String rutaRelativa) {
-        // Convierte la ruta relativa a absoluta para que VLC pueda abrirla
-        String rutaAbsoluta = new File(rutaRelativa).getAbsolutePath();
-        new Thread(() -> Reproductor.lanzar(rutaAbsoluta), "hilo-reproductor").start();
+    private static void gestionarDetalle(String titulo) {
+        Pelicula p = solicitarInfoPelicula(titulo);
+        if(p==null) {
+            System.out.println("No se pudo obtener la información de la película.");
+            return;
+        }
+        if (p != null) {
+            System.out.println("\n------------------------------");
+            System.out.println("TÍTULO: " + p.getTitulo());
+            System.out.println("AÑO: " + p.getAño());
+            System.out.println("DIRECTORES: " + String.join(", ", p.getDirector()));
+            System.out.println("GÉNEROS: " + String.join(", ", p.getGeneros()));
+            System.out.println("------------------------------");
+            System.out.println("1. Reproducir Película");
+            System.out.println("2. Volver al Catálogo");
+            System.out.print("Selección: ");
+            
+            int opcion = sc.nextInt();
+            if (opcion == 1) {
+                System.out.println("Reproduciendo: " + p.getTitulo());
+                System.out.println(p.getPath());
+                App.lanzar(p.getPath());
+            }
+        }
     }
+
+    private static Pelicula solicitarInfoPelicula(String titulo) {
+        try(Socket s = new Socket(IP_SERVIDOR, 5000);
+            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+            out.writeUTF("VER_DETALLE;" + titulo);
+            out.flush();
+            
+            return (Pelicula) in.readObject();
+        } catch (Exception e) {
+            System.err.println("Error al solicitar información de la película: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ArrayList<Pelicula> solicitarCatalogo() {
+        try(Socket s = new Socket(IP_SERVIDOR, 5000);
+            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+            out.writeUTF("SOLICITAR_CATALOGO");
+            out.flush();
+            return (ArrayList<Pelicula>) in.readObject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /*
+    private static void iniciarStreaming(String rutaVideo) {
+        new Thread(() -> {
+            File archivoBuffer = new File("buffer_temporal.mp4");
+            
+            try (DatagramSocket socketUDP = new DatagramSocket();
+                
+                 FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
+                
+                socketUDP.setSoTimeout(3000);
+
+                String mensaje = "PLAY;" + rutaVideo;
+                byte[] data = mensaje.getBytes();
+                DatagramPacket peticion = new DatagramPacket(data, data.length, 
+                                            InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
+                socketUDP.send(peticion);
+
+                System.out.println("Iniciando descarga al búfer...");
+                byte[] buffer = new byte[640000];
+                int paquetesRecibidos = 0;
+                boolean reproductorIniciado = false;
+                
+                while (true) {
+                    DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
+                    socketUDP.receive(paquete);
+                    
+                    // Escribimos los bytes recibidos en el archivo
+                    fos.write(paquete.getData(), 0, paquete.getLength());
+                    fos.flush(); 
+
+                    paquetesRecibidos++;
+
+                    // Pre-buffering: Esperamos 10 paquetes para asegurar que el archivo tenga cabecera
+                    if (paquetesRecibidos == 10 && !reproductorIniciado) {
+                        System.out.println("Búfer inicial listo. Abriendo reproductor JavaFX...");
+                        ReproductorFX.iniciar(archivoBuffer.getAbsolutePath());
+                        reproductorIniciado = true;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("\nFin del streaming UDP o error de red.");
+            }
+        }).start();
+    }
+    */
 }
