@@ -10,29 +10,31 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    private static final String IP_SERVIDOR = "127.0.0.1";
-    private static final int PUERTO_UDP_SERVER = 6000;
-    private static final int[] PUERTOS_CATALOGO = {5000, 5001, 5002}; 
-    public static int relojCliente = 0; 
+    private static final String[][] NODOS_CONOCIDOS = {
+        {"127.0.0.1", "5001", "6001"}, // Nodo 1: IP, TCP, UDP
+        {"127.0.0.1", "5002", "6002"}, // Nodo 2
+        {"127.0.0.1", "5003", "6003"}  // Nodo 3
+    };
+    private static int nodoActualIndex = 0; 
     private static Scanner sc = new Scanner(System.in);
-    
+
     public static void main(String[] args) {
         ArrayList<Pelicula> p = solicitarCatalogo();
         if(p == null || p.isEmpty()) {
-            System.err.println("No se pudo conectar a servidorCatalogo\nSaliendo del sistema...");
+            System.err.println("Error crítico: Ningún nodo de la red distribuida está disponible.\nSaliendo del sistema...");
             return;
         }
 
         boolean ejecutar = true;
         while (ejecutar) {
             System.out.println("\n=========================================================");
-            System.out.println("                         Netflix");
+            System.out.println("                         Netflix Distribuido");
             System.out.println("=========================================================");
-            
+            System.out.println("Conectado actualmente al Nodo: " + (nodoActualIndex + 1));
             System.out.println("----------------- Catálogo de películas ----------------");
             for(int i = 0; i < p.size(); i++) {
                 Pelicula pel = p.get(i);
-                System.out.println((i + 1) + ". " + pel.titulo);
+                System.out.println((i + 1) + ". " + pel.getTitulo());
             }
             System.out.println("---------------------------------------------------------");
             System.out.println("0. Salir de la aplicación");
@@ -42,7 +44,6 @@ public class Main {
                 System.out.println("Saliendo del sistema...");
                 ejecutar = false; 
             } else if (op > 0 && op <= p.size()) {
-                System.out.println(p.get(op - 1).getTitulo());
                 gestionarDetalle(p.get(op - 1).getTitulo());
             }
         }
@@ -50,92 +51,79 @@ public class Main {
 
     private static void gestionarDetalle(String titulo) {
         Pelicula p = solicitarInfoPelicula(titulo);
-        if(p==null) {
-            System.out.println("No se pudo obtener la información de la película.");
+        if(p == null) {
+            System.out.println("No se pudo obtener la información de la película. Todos los nodos fallaron.");
             return;
         }
-        if (p != null) {
-            System.out.println("\n-----Detalles Pelicula-----");
-            System.out.println("TÍTULO: " + p.getTitulo());
-            System.out.println("AÑO: " + p.getAño());
-            System.out.println("DIRECTORES: " + String.join(", ", p.getDirector()));
-            System.out.println("GÉNEROS: " + String.join(", ", p.getGeneros()));
-            System.out.println("---------------------------\n");
-            System.out.println("1. Reproducir película");
-            System.out.println("2. Volver al catálogo");
-            System.out.print("Seleccione una opción: ");
-            
-            int opcion = sc.nextInt();
-            if (opcion == 1) {
-                System.out.println("Reproduciendo: " + p.getTitulo());
-                iniciarStreaming(p.getPath());
-            }
-        }
-    }
-
-    private static Pelicula solicitarInfoPelicula(String titulo) {
-        // 1. Avanza el reloj antes del evento de envío
-        relojCliente++; 
-
-        // 2. Bucle de tolerancia a fallos (recorre los puertos 5000, 5001...)
-        for (int puertoDestino : PUERTOS_CATALOGO) {
-            try (Socket s = new Socket("127.0.0.1", puertoDestino);
-                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
-                
-                // 3. Instrucción correcta y envío del título protegido
-                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
-                out.writeObject(msjEnvio);
-                out.flush();
-                
-                // 4. Recibimos el "Sobre" del servidor
-                Mensaje msjRecibido = (Mensaje) in.readObject();
-                
-                // 5. Actualizamos el reloj lógico: max(local, recibido) + 1
-                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
-                
-                // 6. Extraemos la película desencriptada del sobre
-                return (Pelicula) msjRecibido.getPayload();
-
-            } catch (Exception e) {
-                System.out.println("Nodo Catálogo en puerto " + puertoDestino + " no responde. Intentando con nodo de respaldo...");
-                // Continúa el for() intentando con el siguiente puerto
-            }
-        }
         
-        System.err.println("Error crítico: Todos los nodos del catálogo están caídos.");
-        return null;
+        System.out.println("\n-----Detalles Pelicula-----");
+        System.out.println("TÍTULO: " + p.getTitulo());
+        System.out.println("AÑO: " + p.getAño());
+        System.out.println("DIRECTORES: " + String.join(", ", p.getDirector()));
+        System.out.println("GÉNEROS: " + String.join(", ", p.getGeneros()));
+        System.out.println("---------------------------\n");
+        System.out.println("1. Reproducir película");
+        System.out.println("2. Volver al catálogo");
+        System.out.print("Seleccione una opción: ");
+        
+        int opcion = sc.nextInt();
+        if (opcion == 1) {
+            System.out.println("Reproduciendo: " + p.getTitulo());
+            iniciarStreaming(p.getPath());
+        }
     }
 
     @SuppressWarnings("unchecked")
     private static ArrayList<Pelicula> solicitarCatalogo() {
-        relojCliente++; 
-
-        for (int puertoDestino : PUERTOS_CATALOGO) {
-            try (Socket s = new Socket(IP_SERVIDOR, puertoDestino);
-                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
-                
-                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
-                out.writeObject(msjEnvio);
+        int intentos = 0;
+        while (intentos < NODOS_CONOCIDOS.length) {
+            String ip = NODOS_CONOCIDOS[nodoActualIndex][0];
+            int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActualIndex][1]);
+            
+            try(Socket s = new Socket(ip, puertoTCP);
+                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
                 out.flush();
-                
-                Mensaje msjRecibido = (Mensaje) in.readObject();
-                
-                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
-                
-                return (ArrayList<Pelicula>) msjRecibido.getPayload(); 
-                
+                ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+                out.writeUTF("SOLICITAR_CATALOGO");
+                out.flush();
+                return (ArrayList<Pelicula>) in.readObject();
             } catch (Exception e) {
-                System.out.println("Nodo Catálogo " + puertoDestino + " no responde al arranque. Buscando otro...");
-                // Falla controlada, intenta con el siguiente.
+                System.out.println("[Tolerancia a fallos] Nodo " + (nodoActualIndex + 1) + " no responde. Saltando al siguiente nodo...");
+                nodoActualIndex = (nodoActualIndex + 1) % NODOS_CONOCIDOS.length;
+                intentos++;
             }
         }
-        return null; // Solo retorna null si TODOS los nodos están caídos
+        return null;
+    }
+
+    private static Pelicula solicitarInfoPelicula(String titulo) {
+        int intentos = 0;
+        while (intentos < NODOS_CONOCIDOS.length) {
+            String ip = NODOS_CONOCIDOS[nodoActualIndex][0];
+            int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActualIndex][1]);
+
+            try(Socket s = new Socket(ip, puertoTCP);
+                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+                out.flush();
+                ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+                out.writeUTF("VER_DETALLE;" + titulo);
+                out.flush();
+                return (Pelicula) in.readObject();
+            } catch (Exception e) {
+                System.out.println("[Tolerancia a fallos] Nodo " + (nodoActualIndex + 1) + " caído al pedir detalles. Rotando...");
+                nodoActualIndex = (nodoActualIndex + 1) % NODOS_CONOCIDOS.length;
+                intentos++;
+            }
+        }
+        return null;
     }
 
     private static void iniciarStreaming(String rutaVideo) {
         File archivoBuffer = new File("buffer_temporal.mp4");
+        
+        // Obtenemos los datos del nodo al que estamos conectados en este momento
+        String ip = NODOS_CONOCIDOS[nodoActualIndex][0];
+        int puertoUDP = Integer.parseInt(NODOS_CONOCIDOS[nodoActualIndex][2]);
         
         try (DatagramSocket socketUDP = new DatagramSocket();
              FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
@@ -144,12 +132,11 @@ public class Main {
 
             String mensaje = "PLAY;" + rutaVideo;
             byte[] data = mensaje.getBytes();
-            DatagramPacket peticion = new DatagramPacket(data, data.length, 
-                                        InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
+            DatagramPacket peticion = new DatagramPacket(data, data.length, InetAddress.getByName(ip), puertoUDP);
             socketUDP.send(peticion);
 
-            System.out.println("Iniciando recepción de datos por UDP...");
-            byte[] buffer = new byte[640000];
+            System.out.println("Iniciando recepción de datos por UDP desde el Nodo " + (nodoActualIndex + 1) + "...");
+            byte[] buffer = new byte[64000];
             int paquetesRecibidos = 0;
             
             while (true) {
@@ -167,11 +154,7 @@ public class Main {
             
         } catch (java.net.SocketTimeoutException e) {
             System.out.println("\nTransferencia completada. Guardando archivo en disco...");
-            
-            try {
-                Thread.sleep(500); 
-            } catch (InterruptedException ex) {}
-
+            try { Thread.sleep(500); } catch (InterruptedException ex) {}
             System.out.println("Abriendo el reproductor JavaFX...");
             App.lanzar(archivoBuffer.getAbsolutePath());
             

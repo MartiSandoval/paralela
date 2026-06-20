@@ -15,9 +15,10 @@ public class ServidorCatalogo {
         if (args.length > 0) {
             miPuerto = Integer.parseInt(args[0]);
         } else {
-            java.util.Scanner sc = new java.util.Scanner(System.in);
-            System.out.print("Ingrese el puerto para este nodo (ej. 5000, 5001, 5002): ");
-            miPuerto = sc.nextInt();
+            try (java.util.Scanner sc = new java.util.Scanner(System.in)) {
+                System.out.print("Ingrese el puerto para este nodo (ej. 5000, 5001, 5002): ");
+                miPuerto = sc.nextInt();
+            }
         }
         
         ArrayList<String> datosPeliculas = new ArrayList<>();

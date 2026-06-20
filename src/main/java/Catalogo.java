@@ -1,8 +1,10 @@
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Catalogo {
-    ArrayList<Pelicula> peliculas = new ArrayList<>();
-    ArrayList<String> recomendaciones = new ArrayList<>();
+    private List<Pelicula> peliculas = new CopyOnWriteArrayList<>();
+    private List<String> recomendaciones = new CopyOnWriteArrayList<>();
 
     public Catalogo(ArrayList<String> lista_peliculas, int num_movies) {
         for(int i = 0; i < num_movies; i++) {
@@ -25,7 +27,7 @@ public class Catalogo {
         }
     }
 
-    public synchronized Pelicula getPeliculaPorTitulo(String titulo) {
+    public Pelicula getPeliculaPorTitulo(String titulo) {
         for (Pelicula p : peliculas) {
             if (p.getTitulo().equalsIgnoreCase(titulo)) {
                 return p;
@@ -34,5 +36,7 @@ public class Catalogo {
         return null;
     }
 
-    public ArrayList<Pelicula> getPeliculas() { return peliculas; }
+    public ArrayList<Pelicula> getPeliculas() { 
+        return new ArrayList<>(peliculas); 
+    }
 }
