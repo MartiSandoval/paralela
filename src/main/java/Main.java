@@ -12,7 +12,10 @@ import java.util.Scanner;
 public class Main {
     private static final String IP_SERVIDOR = "127.0.0.1";
     private static final int PUERTO_UDP_SERVER = 6000;
+    private static final int[] PUERTOS_CATALOGO = {5000, 5001, 5002}; 
+    public static int relojCliente = 0; 
     private static Scanner sc = new Scanner(System.in);
+    
     public static void main(String[] args) {
         ArrayList<Pelicula> p = solicitarCatalogo();
         if(p == null || p.isEmpty()) {
@@ -71,33 +74,64 @@ public class Main {
     }
 
     private static Pelicula solicitarInfoPelicula(String titulo) {
-        try(Socket s = new Socket(IP_SERVIDOR, 5000);
-            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
-            out.flush();
-            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-            out.writeUTF("VER_DETALLE;" + titulo);
-            out.flush();
-            
-            return (Pelicula) in.readObject();
-        } catch (Exception e) {
-            System.err.println("Error al solicitar información de la película: " + e.getMessage());
-            e.printStackTrace();
-            return null;
+        // 1. Avanza el reloj antes del evento de envío
+        relojCliente++; 
+
+        // 2. Bucle de tolerancia a fallos (recorre los puertos 5000, 5001...)
+        for (int puertoDestino : PUERTOS_CATALOGO) {
+            try (Socket s = new Socket("127.0.0.1", puertoDestino);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                // 3. Instrucción correcta y envío del título protegido
+                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
+                out.writeObject(msjEnvio);
+                out.flush();
+                
+                // 4. Recibimos el "Sobre" del servidor
+                Mensaje msjRecibido = (Mensaje) in.readObject();
+                
+                // 5. Actualizamos el reloj lógico: max(local, recibido) + 1
+                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                
+                // 6. Extraemos la película desencriptada del sobre
+                return (Pelicula) msjRecibido.getPayload();
+
+            } catch (Exception e) {
+                System.out.println("Nodo Catálogo en puerto " + puertoDestino + " no responde. Intentando con nodo de respaldo...");
+                // Continúa el for() intentando con el siguiente puerto
+            }
         }
+        
+        System.err.println("Error crítico: Todos los nodos del catálogo están caídos.");
+        return null;
     }
 
     @SuppressWarnings("unchecked")
     private static ArrayList<Pelicula> solicitarCatalogo() {
-        try(Socket s = new Socket(IP_SERVIDOR, 5000);
-            ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
-            out.flush();
-            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-            out.writeUTF("SOLICITAR_CATALOGO");
-            out.flush();
-            return (ArrayList<Pelicula>) in.readObject();
-        } catch (Exception e) {
-            return null;
+        relojCliente++; 
+
+        for (int puertoDestino : PUERTOS_CATALOGO) {
+            try (Socket s = new Socket(IP_SERVIDOR, puertoDestino);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
+                out.writeObject(msjEnvio);
+                out.flush();
+                
+                Mensaje msjRecibido = (Mensaje) in.readObject();
+                
+                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                
+                return (ArrayList<Pelicula>) msjRecibido.getPayload(); 
+                
+            } catch (Exception e) {
+                System.out.println("Nodo Catálogo " + puertoDestino + " no responde al arranque. Buscando otro...");
+                // Falla controlada, intenta con el siguiente.
+            }
         }
+        return null; // Solo retorna null si TODOS los nodos están caídos
     }
 
     private static void iniciarStreaming(String rutaVideo) {

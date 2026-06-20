@@ -1,20 +1,38 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
-/**
- *
- * @author marti
- */
 import java.io.Serializable;
 import javax.crypto.SealedObject;
 
 public class Mensaje implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    private String operacion; // Ej: "SOLICITAR_CATALOGO", "PLAY", "HEARTBEAT"
-    private SealedObject payloadSeguro; // El ArrayList o String cifrado
-    private int relojLamport; // Requisito Unidad 5
-    private int puertoOrigen; // Para saber qué nodo de la topología lo envía
+    private String operacion; 
+    private SealedObject payloadSeguro; // El contenido viaja blindado
+    private int relojLamport; 
+    private int puertoOrigen; 
+
+    // Constructor
+    public Mensaje(String operacion, Serializable payload, int relojLamport, int puertoOrigen) {
+        this.operacion = operacion;
+        this.relojLamport = relojLamport;
+        this.puertoOrigen = puertoOrigen;
+        try {
+            this.payloadSeguro = Seguridad.encriptar(payload);
+        } catch (Exception e) {
+            System.err.println("Error al cifrar el payload del mensaje.");
+        }
+    }
+
+    // Getters
+    public String getOperacion() { return operacion; }
+    public int getRelojLamport() { return relojLamport; }
+    public int getPuertoOrigen() { return puertoOrigen; }
+    
+    // Al pedir el payload, se desencripta automáticamente
+    public Object getPayload() {
+        try {
+            return Seguridad.desencriptar(this.payloadSeguro);
+        } catch (Exception e) {
+            System.err.println("Intento de intercepción o error al descifrar.");
+            return null;
+        }
+    }
 }

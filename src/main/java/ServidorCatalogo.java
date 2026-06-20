@@ -6,10 +6,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ServidorCatalogo {
-    private static final int PUERTO = 5000;
+    public static int miPuerto; 
     private static final ExecutorService poolHilos = Executors.newFixedThreadPool(10); 
-
+    public static int relojLocal = 0;
+    
     public static void main(String[] args) {
+        // --- NUEVA LÓGICA DE ASIGNACIÓN DE PUERTO ---
+        if (args.length > 0) {
+            miPuerto = Integer.parseInt(args[0]);
+        } else {
+            java.util.Scanner sc = new java.util.Scanner(System.in);
+            System.out.print("Ingrese el puerto para este nodo (ej. 5000, 5001, 5002): ");
+            miPuerto = sc.nextInt();
+        }
+        
         ArrayList<String> datosPeliculas = new ArrayList<>();
         try (InputStream is = ServidorCatalogo.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
              BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
@@ -31,20 +41,19 @@ public class ServidorCatalogo {
         }
 
         Catalogo baseDeDatos = new Catalogo(datosPeliculas, datosPeliculas.size());
+        new Thread(new GestorMembresia(miPuerto, "CATALOGO")).start();
 
-        try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
-            System.out.println("Servidor de Catálogo TCP listo en el puerto " + PUERTO);
-
+        try (ServerSocket serverSocket = new ServerSocket(miPuerto)) {
+            System.out.println("Servidor de Catálogo TCP listo en el puerto " + miPuerto);
+            
             while (true) {
                 Socket clienteAceptado = serverSocket.accept();
-                System.out.println("Cliente conectado: " + clienteAceptado.getInetAddress());
-
-                // Delegamos al manejador concurrente
                 Cliente tarea = new Cliente(clienteAceptado, baseDeDatos);
                 poolHilos.execute(tarea);
             }
         } catch (IOException e) {
             System.err.println("Error en el socket del servidor: " + e.getMessage());
         }
+        
     }
 }
