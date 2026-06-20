@@ -46,5 +46,33 @@ public class GestorMembresia implements Runnable {
             }
         }
         System.out.println("Topología actual conocida: " + nodosVivos.toString());
+        
+        while (true) {
+            try {
+                Thread.sleep(5000); 
+                
+                // Recorre todos los nodos que actualmente creemos que están vivos
+                for (Integer puertoDestino : nodosVivos.keySet()) {
+                    try (Socket s = new Socket("127.0.0.1", puertoDestino);
+                         ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                         ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                        
+                        Mensaje latido = new Mensaje("HEARTBEAT", miTipo, 0, miPuerto);
+                        out.writeObject(latido);
+                        out.flush();
+                        
+                        // Esperamos la confirmación antes de que el try-with-resources cierre el socket
+                        in.readObject();
+                        
+                    } catch (Exception e) {
+                        // Si falla la conexión, el nodo hizo CRASH. Lo eliminamos.
+                        System.err.println("-> [Alerta de Fallo] El nodo en el puerto " + puertoDestino + " no responde. Eliminándolo de la topología.");
+                        nodosVivos.remove(puertoDestino);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                break;
+            }
+        }
     }
 }

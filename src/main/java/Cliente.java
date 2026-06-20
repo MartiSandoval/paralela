@@ -52,6 +52,13 @@ public class Cliente implements Runnable {
                 Mensaje respuesta = new Mensaje("RESPUESTA_DETALLE", p, ServidorCatalogo.relojLocal, 5000);
                 out.writeObject(respuesta);
             }
+            else if (peticion.getOperacion().equals("HEARTBEAT")) {
+                // Le enviamos un acuse de recibo para un cierre limpio de TCP
+                Mensaje ack = new Mensaje("ACK", null, ServidorCatalogo.relojLocal, ServidorCatalogo.miPuerto);
+                out.writeObject(ack);
+                out.flush();
+                return; // Cortamos la ejecución aquí limpiamente
+            }
             out.flush();
 
         } catch (Exception e) { // Cambiar IOException a Exception por el readObject

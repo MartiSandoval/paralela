@@ -6,19 +6,33 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ServidorCatalogo {
-    public static int miPuerto; 
+    public static int miPuerto = -1; 
     private static final ExecutorService poolHilos = Executors.newFixedThreadPool(10); 
     public static int relojLocal = 0;
     
+    private static final int[] PUERTOS_DISPONIBLES = {5000, 5001, 5002};
     public static void main(String[] args) {
-        // --- NUEVA LÓGICA DE ASIGNACIÓN DE PUERTO ---
-        if (args.length > 0) {
-            miPuerto = Integer.parseInt(args[0]);
-        } else {
-            java.util.Scanner sc = new java.util.Scanner(System.in);
-            System.out.print("Ingrese el puerto para este nodo (ej. 5000, 5001, 5002): ");
-            miPuerto = sc.nextInt();
+        ServerSocket serverSocket = null;
+
+        System.out.println("Buscando puerto disponible para iniciar...");
+        for (int puerto : PUERTOS_DISPONIBLES) {
+            try {
+                // Intentamos adueñarnos de este puerto
+                serverSocket = new ServerSocket(puerto);
+                miPuerto = puerto;
+                break; // Si pasamos la línea anterior sin error, salimos del bucle
+            } catch (IOException e) {
+                // El puerto ya está usado por otra instancia, el bucle continúa
+            }
         }
+
+        // Si terminó el bucle y no encontró nada, apagamos el servidor.
+        if (miPuerto == -1) {
+            System.err.println("Error crítico: Todos los puertos de la red (5000-5002) están ocupados.");
+            return; 
+        }
+
+        System.out.println("¡Éxito! Nodo Catálogo corriendo automáticamente en el puerto: " + miPuerto);
         
         ArrayList<String> datosPeliculas = new ArrayList<>();
         try (InputStream is = ServidorCatalogo.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
@@ -43,9 +57,7 @@ public class ServidorCatalogo {
         Catalogo baseDeDatos = new Catalogo(datosPeliculas, datosPeliculas.size());
         new Thread(new GestorMembresia(miPuerto, "CATALOGO")).start();
 
-        try (ServerSocket serverSocket = new ServerSocket(miPuerto)) {
-            System.out.println("Servidor de Catálogo TCP listo en el puerto " + miPuerto);
-            
+        try {
             while (true) {
                 Socket clienteAceptado = serverSocket.accept();
                 Cliente tarea = new Cliente(clienteAceptado, baseDeDatos);
