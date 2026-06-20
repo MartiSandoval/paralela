@@ -88,7 +88,10 @@ public class Main {
                 out.flush();
                 return (ArrayList<Pelicula>) in.readObject();
             } catch (Exception e) {
-                System.out.println("[Tolerancia a fallos] Nodo " + (nodoActualIndex + 1) + " no responde. Saltando al siguiente nodo...");
+                System.err.println("\n[Tolerancia a fallos] Falló el Nodo " + (nodoActualIndex + 1));
+                // ESTA LÍNEA ES VITAL PARA DEBUGGEAR:
+                e.printStackTrace(); 
+                
                 nodoActualIndex = (nodoActualIndex + 1) % NODOS_CONOCIDOS.length;
                 intentos++;
             }
