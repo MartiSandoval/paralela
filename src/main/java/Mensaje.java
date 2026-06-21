@@ -1,38 +1,22 @@
 import java.io.Serializable;
-import javax.crypto.SealedObject;
 
 public class Mensaje implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    private String operacion; 
-    private SealedObject payloadSeguro; // El contenido viaja blindado
-    private int relojLamport; 
-    private int puertoOrigen; 
+    private String operacion;     // Ej: "SOLICITAR_CATALOGO", "VER_DETALLE"
+    private Object payload;       // El contenido (Catálogo, Película, o null)
+    private int relojLamport;     // La marca de tiempo lógico
+    private String idOrigen;      // Quién emite el mensaje (Ej: "Cliente", "Nodo-1")
 
-    // Constructor
-    public Mensaje(String operacion, Serializable payload, int relojLamport, int puertoOrigen) {
+    public Mensaje(String operacion, Object payload, int relojLamport, String idOrigen) {
         this.operacion = operacion;
+        this.payload = payload;
         this.relojLamport = relojLamport;
-        this.puertoOrigen = puertoOrigen;
-        try {
-            this.payloadSeguro = Seguridad.encriptar(payload);
-        } catch (Exception e) {
-            System.err.println("Error al cifrar el payload del mensaje.");
-        }
+        this.idOrigen = idOrigen;
     }
 
-    // Getters
     public String getOperacion() { return operacion; }
+    public Object getPayload() { return payload; }
     public int getRelojLamport() { return relojLamport; }
-    public int getPuertoOrigen() { return puertoOrigen; }
-    
-    // Al pedir el payload, se desencripta automáticamente
-    public Object getPayload() {
-        try {
-            return Seguridad.desencriptar(this.payloadSeguro);
-        } catch (Exception e) {
-            System.err.println("Intento de intercepción o error al descifrar.");
-            return null;
-        }
-    }
+    public String getIdOrigen() { return idOrigen; }
 }
