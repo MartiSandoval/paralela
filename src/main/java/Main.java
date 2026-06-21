@@ -50,7 +50,6 @@ public class Main {
             
             int op = sc.nextInt();
             
-            // CORRECCIÓN 1: Llamada correcta al método de evento local
             eventoLocal("Usuario seleccionó opción " + op); 
             
             if (op == 0) { 
@@ -100,13 +99,12 @@ public class Main {
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 
-                // CORRECCIÓN 2: Uso de la clase Mensaje para el envío
                 eventoLocal("Enviando petición SOLICITAR_CATALOGO al Nodo " + (nodoActual + 1));
-                Mensaje msjSalida = new Mensaje("SOLICITAR_CATALOGO", null, relojLamport, puertoTCP);
+                // CORRECCIÓN: El 4to parámetro ahora es un String
+                Mensaje msjSalida = new Mensaje("SOLICITAR_CATALOGO", null, relojLamport, "Cliente Netflix");
                 out.writeObject(msjSalida);
                 out.flush();
                 
-                // Recepción del objeto Mensaje y sincronización del reloj
                 Mensaje msjEntrada = (Mensaje) in.readObject();
                 sincronizarReloj(msjEntrada.getRelojLamport(), "Catálogo descargado con éxito");
                 
@@ -132,13 +130,12 @@ public class Main {
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 
-                // CORRECCIÓN 3: Envío del título dentro del Payload del Mensaje
                 eventoLocal("Solicitando detalles de la película: " + titulo);
-                Mensaje msjSalida = new Mensaje("VER_DETALLE", titulo, relojLamport, puertoTCP); 
+                // CORRECCIÓN: El 4to parámetro ahora es un String
+                Mensaje msjSalida = new Mensaje("VER_DETALLE", titulo, relojLamport, "Cliente Netflix"); 
                 out.writeObject(msjSalida);
                 out.flush();
                 
-                // Recepción y sincronización
                 Mensaje msjEntrada = (Mensaje) in.readObject();
                 sincronizarReloj(msjEntrada.getRelojLamport(), "Detalles recibidos de Nodo " + (nodoActual + 1));
                 

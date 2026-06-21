@@ -13,6 +13,7 @@ public class Cliente implements Runnable {
     @Override
     public void run() {
         int idNodoTemp = socketCliente.getLocalPort() - 5000; 
+        String nombreOrigen = "Nodo " + idNodoTemp; // Lo transformamos a String para el Mensaje
         
         try (ObjectOutputStream out = new ObjectOutputStream(socketCliente.getOutputStream())) {
             out.flush();
@@ -26,13 +27,15 @@ public class Cliente implements Runnable {
 
             if (peticion.getOperacion().equals("SOLICITAR_CATALOGO")) {
                 NodoServidor.registrarEventoLocal("Empaquetando catálogo de películas", idNodoTemp);
-                respuesta = new Mensaje("RESPUESTA_CATALOGO", baseDeDatos.getPeliculas(), NodoServidor.relojLamport.get());
+                // AHORA SÍ TIENE 4 PARÁMETROS: (operacion, payload, reloj, idOrigen)
+                respuesta = new Mensaje("RESPUESTA_CATALOGO", baseDeDatos.getPeliculas(), NodoServidor.relojLamport.get(), nombreOrigen);
             } 
             else if (peticion.getOperacion().equals("VER_DETALLE")) {
                 String titulo = (String) peticion.getPayload(); 
                 NodoServidor.registrarEventoLocal("Consultando base de datos para: " + titulo, idNodoTemp);
                 Pelicula p = baseDeDatos.getPeliculaPorTitulo(titulo);
-                respuesta = new Mensaje("RESPUESTA_DETALLE", p, NodoServidor.relojLamport.get());
+                // AHORA SÍ TIENE 4 PARÁMETROS
+                respuesta = new Mensaje("RESPUESTA_DETALLE", p, NodoServidor.relojLamport.get(), nombreOrigen);
             }
             
             out.writeObject(respuesta);
