@@ -89,13 +89,20 @@ public class Main {
 
     @SuppressWarnings("unchecked")
     private static ArrayList<Pelicula> solicitarCatalogo() {
+        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
+        
         while (intentos < NODOS_CONOCIDOS.length) {
             String ip = NODOS_CONOCIDOS[nodoActual][0];
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
             
-            try(Socket s = new Socket(ip, puertoTCP);
-                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            try (Socket s = new Socket(ip, puertoTCP);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
+                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
+                out.writeObject(msjEnvio);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 
@@ -120,13 +127,20 @@ public class Main {
     }
 
     private static Pelicula solicitarInfoPelicula(String titulo) {
+        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
+        
         while (intentos < NODOS_CONOCIDOS.length) {
             String ip = NODOS_CONOCIDOS[nodoActual][0];
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
 
-            try(Socket s = new Socket(ip, puertoTCP);
-                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            try (Socket s = new Socket(ip, puertoTCP);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
+                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
+                out.writeObject(msjEnvio);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 

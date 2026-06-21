@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger; 
@@ -44,7 +45,6 @@ public class NodoServidor {
         this.puertoCoordinacion = puertoUDP + 1000;
         cargarCatalogo();
     }
-
     private void cargarCatalogo() {
         ArrayList<String> datosPeliculas = new ArrayList<>();
         try (InputStream is = NodoServidor.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
@@ -138,6 +138,28 @@ public class NodoServidor {
                     System.out.println("==================================================");
                     System.out.println("[BULLY] El NODO " + coordinadorActual + " es el NUEVO COORDINADOR.");
                     System.out.println("==================================================");
+                }
+                Thread.sleep(5000);// Frecuencia del latido
+            }
+        } catch (Exception e) {
+            System.err.println("[Nodo " + idNodo + "] Error enviando heartbeat: " + e.getMessage());
+        }
+    }
+
+    // 2. Escucha pings en el puertoHeartbeat y actualiza la estampa de tiempo
+    private void recibirHeartbeats() {
+        try (DatagramSocket socketEscucha = new DatagramSocket(puertoHeartbeat)) {
+            byte[] buffer = new byte[256];
+            while (true) {
+                DatagramPacket pkt = new DatagramPacket(buffer, buffer.length);
+                socketEscucha.receive(pkt);
+                String msj = new String(pkt.getData(), 0, pkt.getLength());
+                
+                if (msj.startsWith("HB;")) {
+                    int idOrigen = Integer.parseInt(msj.trim().split(";")[1]);
+                    // Actualizamos el reloj de la última vez que vimos vivo a este nodo
+                    heartbeatsRecibidos.put(idOrigen, System.currentTimeMillis());
+                    System.out.println("[Heartbeat] Nodo " + idNodo + " recibió pulso UDP del Nodo " + idOrigen);
                 }
             }
         } catch (Exception e) {
