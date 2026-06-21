@@ -3,10 +3,16 @@
     "configurations": [
         {
             "type": "java",
+            "name": "PruebaNodos",
+            "request": "launch",
+            "mainClass": "PruebaNodos",
+            "projectName": "paralela"
+        },
+        {
+            "type": "java",
             "name": "GeneradorCarga",
             "request": "launch",
-            "mainClass": "GeneradorCarga",
-            "projectName": "streaming-platform"
+            "mainClass": "GeneradorCarga"
         },
         {
             "type": "java",

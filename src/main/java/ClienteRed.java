@@ -9,39 +9,33 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.function.IntConsumer;
 
-/**
- * Encapsula toda la comunicacion con la red distribuida de NodoServidor
- * (TCP para catalogo/detalle, UDP para streaming de video).
- *
- * Es el unico cliente real de la red: tanto MainApp (la app JavaFX) como
- * cualquier clase de prueba/debug (ej. PruebaNodos) deben invocar estos
- * metodos en vez de reimplementar la logica de sockets, para que la
- * tolerancia a fallos y el reloj de Lamport se mantengan consistentes sin
- * importar quien los use.
- *
- * El logging de cada evento (envio, sincronizacion, fallos de nodo) se hace
- * por System.out/System.err. Esto es deliberado: no ensucia la UI de
- * JavaFX (que nunca lee la salida estandar), pero sí queda visible en la
- * terminal donde se ejecute el proceso, sea "mvn javafx:run" o una clase
- * de prueba standalone.
- */
+/*
+Encapsula toda la comunicacion con la red distribuida de NodoServidor
+(TCP para catalogo/detalle, UDP para streaming de video).
+
+Es el unico cliente real de la red: tanto MainApp (la app JavaFX) como
+cualquier clase de prueba/debug (ej. PruebaNodos) deben invocar estos
+metodos en vez de reimplementar la logica de sockets, para que la
+tolerancia a fallos y el reloj de Lamport se mantengan consistentes sin
+importar quien los use.
+
+El logging de cada evento (envio, sincronizacion, fallos de nodo) se hace
+por System.out/System.err. Esto es deliberado: no ensucia la UI de
+JavaFX (que nunca lee la salida estandar), pero sí queda visible en la
+terminal donde se ejecute el proceso, sea "mvn javafx:run" o una clase
+de prueba standalone.
+*/
 public class ClienteRed {
 
     private static final String ID_CLIENTE = "Cliente JavaFX";
 
-    /** Tabla de nodos conocidos: {ip, puertoTCP, puertoUDP}. */
+    // Tabla de nodos conocidos: {ip, puertoTCP, puertoUDP}. 3 Nodos
     private static final String[][] NODOS_CONOCIDOS = {
         {"127.0.0.1", "5001", "6001"},
         {"127.0.0.1", "5002", "6002"},
         {"127.0.0.1", "5003", "6003"}
     };
 
-    /**
-     * Indice del nodo con el que se intenta hablar primero. Es compartido
-     * entre las tres operaciones (catalogo, detalle, streaming): si un nodo
-     * cae, las siguientes llamadas empiezan a probar desde el nodo que
-     * funciono la ultima vez, en vez de reiniciar siempre desde el nodo 0.
-     */
     private static int nodoActual = 0;
 
     private static int relojLamport = 0;
@@ -56,11 +50,6 @@ public class ClienteRed {
         System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] Sincronizacion: " + evento);
     }
 
-    /**
-     * Pide el catalogo completo, rotando por NODOS_CONOCIDOS hasta que uno
-     * responda.
-     * @return la lista de peliculas, o null si todos los nodos estan caidos.
-     */
     @SuppressWarnings("unchecked")
     public static synchronized ArrayList<Pelicula> solicitarCatalogo() {
         int intentos = 0;
@@ -92,11 +81,6 @@ public class ClienteRed {
         return null;
     }
 
-    /**
-     * Pide el detalle de una pelicula por titulo, rotando por NODOS_CONOCIDOS
-     * hasta que uno responda.
-     * @return la Pelicula con sus datos, o null si todos los nodos estan caidos.
-     */
     public static synchronized Pelicula solicitarInfoPelicula(String titulo) {
         int intentos = 0;
 
@@ -127,15 +111,6 @@ public class ClienteRed {
         return null;
     }
 
-    /**
-     * Pide el streaming UDP de una pelicula al nodo actual y lo vuelca en
-     * buffer_temporal.mp4. Es una operacion bloqueante, por lo que debe
-     * invocarse desde un hilo distinto al de JavaFX Application Thread.
-     *
-     * @param rutaVideo identificador de la pelicula que espera NodoServidor.
-     * @param onPaquete callback opcional invocado por cada paquete UDP recibido, con el total acumulado. Puede ser null.
-     * @return la ruta absoluta del archivo descargado, o null si la transferencia fallo.
-     */
     public static String iniciarStreaming(String rutaVideo, IntConsumer onPaquete) {
         File archivoBuffer = new File("buffer_temporal.mp4");
         String ip = NODOS_CONOCIDOS[nodoActual][0];
