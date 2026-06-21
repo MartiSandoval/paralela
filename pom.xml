@@ -64,6 +64,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <!-- Permite ejecutar clases con main() distintas a MainApp,
+                     como PruebaNodos, sin cambiar el mainClass por defecto.
+                     Usage: mvn compile exec:java -Dexec.mainClass=PruebaNodos -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.3</version>
+            </plugin>
         </plugins>
     </build>
 </project>

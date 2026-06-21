@@ -10,100 +10,149 @@ import java.util.ArrayList;
 import java.util.function.IntConsumer;
 
 /**
- * Encapsula toda la comunicacion con ServidorCatalogo (TCP) y ServidorVideo (UDP).
- * Es la misma logica que antes vivia en Main.java, movida aqui para que pueda
- * ser invocada desde controladores de JavaFX sin depender de System.out/Scanner.
+ * Encapsula toda la comunicacion con la red distribuida de NodoServidor
+ * (TCP para catalogo/detalle, UDP para streaming de video).
+ *
+ * Es el unico cliente real de la red: tanto MainApp (la app JavaFX) como
+ * cualquier clase de prueba/debug (ej. PruebaNodos) deben invocar estos
+ * metodos en vez de reimplementar la logica de sockets, para que la
+ * tolerancia a fallos y el reloj de Lamport se mantengan consistentes sin
+ * importar quien los use.
+ *
+ * El logging de cada evento (envio, sincronizacion, fallos de nodo) se hace
+ * por System.out/System.err. Esto es deliberado: no ensucia la UI de
+ * JavaFX (que nunca lee la salida estandar), pero sí queda visible en la
+ * terminal donde se ejecute el proceso, sea "mvn javafx:run" o una clase
+ * de prueba standalone.
  */
 public class ClienteRed {
-    private static final String IP_SERVIDOR = "127.0.0.1";
-    private static final int PUERTO_UDP_SERVER = 6000;
-    private static final int[] PUERTOS_CATALOGO = {5000, 5001, 5002};
 
-    public static int relojCliente = 0;
+    private static final String ID_CLIENTE = "Cliente JavaFX";
+
+    /** Tabla de nodos conocidos: {ip, puertoTCP, puertoUDP}. */
+    private static final String[][] NODOS_CONOCIDOS = {
+        {"127.0.0.1", "5001", "6001"},
+        {"127.0.0.1", "5002", "6002"},
+        {"127.0.0.1", "5003", "6003"}
+    };
 
     /**
-     * Pide el catalogo completo al primer nodo ServidorCatalogo que responda.
+     * Indice del nodo con el que se intenta hablar primero. Es compartido
+     * entre las tres operaciones (catalogo, detalle, streaming): si un nodo
+     * cae, las siguientes llamadas empiezan a probar desde el nodo que
+     * funciono la ultima vez, en vez de reiniciar siempre desde el nodo 0.
+     */
+    private static int nodoActual = 0;
+
+    private static int relojLamport = 0;
+
+    private static synchronized void eventoLocal(String evento) {
+        relojLamport++;
+        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] " + evento);
+    }
+
+    private static synchronized void sincronizarReloj(int relojExterno, String evento) {
+        relojLamport = Math.max(relojLamport, relojExterno) + 1;
+        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] Sincronizacion: " + evento);
+    }
+
+    /**
+     * Pide el catalogo completo, rotando por NODOS_CONOCIDOS hasta que uno
+     * responda.
      * @return la lista de peliculas, o null si todos los nodos estan caidos.
      */
     @SuppressWarnings("unchecked")
-    public static ArrayList<Pelicula> solicitarCatalogo() {
-        relojCliente++;
+    public static synchronized ArrayList<Pelicula> solicitarCatalogo() {
+        int intentos = 0;
 
-        for (int puertoDestino : PUERTOS_CATALOGO) {
-            try (Socket s = new Socket(IP_SERVIDOR, puertoDestino);
+        while (intentos < NODOS_CONOCIDOS.length) {
+            String ip = NODOS_CONOCIDOS[nodoActual][0];
+            int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
+
+            try (Socket s = new Socket(ip, puertoTCP);
                  ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                  ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
 
-                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
+                eventoLocal("Enviando peticion SOLICITAR_CATALOGO al Nodo " + (nodoActual + 1));
+                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojLamport, ID_CLIENTE);
                 out.writeObject(msjEnvio);
                 out.flush();
 
                 Mensaje msjRecibido = (Mensaje) in.readObject();
-
-                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                sincronizarReloj(msjRecibido.getRelojLamport(), "Catalogo descargado con exito");
 
                 return (ArrayList<Pelicula>) msjRecibido.getPayload();
 
             } catch (Exception e) {
-                // Nodo caido, se intenta con el siguiente puerto de la lista.
+                System.out.println("[Tolerancia a fallos] Nodo " + (nodoActual + 1) + " no responde. Saltando al siguiente nodo...");
+                nodoActual = (nodoActual + 1) % NODOS_CONOCIDOS.length;
+                intentos++;
             }
         }
         return null;
     }
 
     /**
-     * Pide el detalle de una pelicula por titulo al primer nodo que responda.
+     * Pide el detalle de una pelicula por titulo, rotando por NODOS_CONOCIDOS
+     * hasta que uno responda.
      * @return la Pelicula con sus datos, o null si todos los nodos estan caidos.
      */
-    public static Pelicula solicitarInfoPelicula(String titulo) {
-        relojCliente++;
+    public static synchronized Pelicula solicitarInfoPelicula(String titulo) {
+        int intentos = 0;
 
-        for (int puertoDestino : PUERTOS_CATALOGO) {
-            try (Socket s = new Socket(IP_SERVIDOR, puertoDestino);
+        while (intentos < NODOS_CONOCIDOS.length) {
+            String ip = NODOS_CONOCIDOS[nodoActual][0];
+            int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
+
+            try (Socket s = new Socket(ip, puertoTCP);
                  ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                  ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
 
-                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
+                eventoLocal("Solicitando detalles de la pelicula: " + titulo);
+                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojLamport, ID_CLIENTE);
                 out.writeObject(msjEnvio);
                 out.flush();
 
                 Mensaje msjRecibido = (Mensaje) in.readObject();
-
-                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                sincronizarReloj(msjRecibido.getRelojLamport(), "Detalles recibidos de Nodo " + (nodoActual + 1));
 
                 return (Pelicula) msjRecibido.getPayload();
 
             } catch (Exception e) {
-                // Nodo caido, se intenta con el siguiente puerto de la lista.
+                System.out.println("[Tolerancia a fallos] Nodo " + (nodoActual + 1) + " caido al pedir detalles. Rotando...");
+                nodoActual = (nodoActual + 1) % NODOS_CONOCIDOS.length;
+                intentos++;
             }
         }
         return null;
     }
 
     /**
-     * Pide el streaming UDP de una pelicula y lo vuelca en buffer_temporal.mp4.
-     * Es una operacion bloqueante (igual que en Main.java original), por lo que
-     * debe invocarse desde un hilo distinto al de JavaFX Application Thread.
+     * Pide el streaming UDP de una pelicula al nodo actual y lo vuelca en
+     * buffer_temporal.mp4. Es una operacion bloqueante, por lo que debe
+     * invocarse desde un hilo distinto al de JavaFX Application Thread.
      *
-     * @param rutaVideo      identificador de la pelicula que espera ServidorVideo (mismo valor que ya se enviaba antes).
-     * @param onPaquete      callback opcional invocado cada vez que llega un paquete UDP, con el total acumulado. Puede ser null.
+     * @param rutaVideo identificador de la pelicula que espera NodoServidor.
+     * @param onPaquete callback opcional invocado por cada paquete UDP recibido, con el total acumulado. Puede ser null.
      * @return la ruta absoluta del archivo descargado, o null si la transferencia fallo.
      */
     public static String iniciarStreaming(String rutaVideo, IntConsumer onPaquete) {
         File archivoBuffer = new File("buffer_temporal.mp4");
+        String ip = NODOS_CONOCIDOS[nodoActual][0];
+        int puertoUDP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][2]);
 
         try (DatagramSocket socketUDP = new DatagramSocket();
              FileOutputStream fos = new FileOutputStream(archivoBuffer)) {
 
             socketUDP.setSoTimeout(2000);
 
-            String mensaje = "PLAY;" + rutaVideo;
-            byte[] data = mensaje.getBytes();
+            eventoLocal("Iniciando streaming UDP desde el Nodo " + (nodoActual + 1));
+            byte[] data = ("PLAY;" + rutaVideo).getBytes();
             DatagramPacket peticion = new DatagramPacket(data, data.length,
-                    InetAddress.getByName(IP_SERVIDOR), PUERTO_UDP_SERVER);
+                    InetAddress.getByName(ip), puertoUDP);
             socketUDP.send(peticion);
 
-            byte[] buffer = new byte[640000];
+            byte[] buffer = new byte[64000];
             int paquetesRecibidos = 0;
 
             while (true) {
@@ -126,6 +175,7 @@ public class ClienteRed {
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
+            eventoLocal("Transferencia completada desde el Nodo " + (nodoActual + 1));
             return archivoBuffer.getAbsolutePath();
 
         } catch (Exception e) {
