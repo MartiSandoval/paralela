@@ -61,8 +61,9 @@ public class Cliente implements Runnable {
             }
             out.flush();
 
-        } catch (Exception e) { // Cambiar IOException a Exception por el readObject
-            System.err.println("Fallo de conexión con el cliente: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error procesando la petición del cliente:");
+            e.printStackTrace(); 
         } finally {
             try {
                 socketCliente.close();

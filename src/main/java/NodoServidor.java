@@ -10,15 +10,31 @@ public class NodoServidor {
     private final int puertoUDP;
     private Catalogo baseDeDatos;
 
+    // Lista de membresía mínima para coordinar heartbeats entre nodos
+    private static final String[][] LISTA_MEMBRESIA = new String[0][];
+
     // Utilizamos los mismos pools de hilos que ya tenías en tus servidores por separado
     private final ExecutorService poolTCP = Executors.newFixedThreadPool(10);
     private final ExecutorService poolUDP = Executors.newFixedThreadPool(5);
+
+    private final int puertoHeartbeat;
+    private final java.util.Map<Integer, Long> heartbeatsRecibidos = new java.util.HashMap<>();
 
     public NodoServidor(int idNodo, int puertoTCP, int puertoUDP) {
         this.idNodo = idNodo;
         this.puertoTCP = puertoTCP;
         this.puertoUDP = puertoUDP;
+        
+        this.puertoHeartbeat = puertoUDP + 1000; 
+        
         cargarCatalogo();
+
+        for (String[] nodo : LISTA_MEMBRESIA) {
+            int idOtro = Integer.parseInt(nodo[0]);
+            if (idOtro != this.idNodo) {
+                heartbeatsRecibidos.put(idOtro, System.currentTimeMillis());
+            }
+        }
     }
 
     private void cargarCatalogo() {
@@ -45,9 +61,12 @@ public class NodoServidor {
     }
 
     public void iniciar() {
-        // Levantamos los servicios TCP y UDP en hilos paralelos
         new Thread(this::escucharTCP).start();
         new Thread(this::escucharUDP).start();
+        new Thread(this::enviarHeartbeats).start();
+        new Thread(this::recibirHeartbeats).start();
+        new Thread(this::monitorFallos).start();
+        
         System.out.println("[Nodo " + idNodo + "] Operando de forma distribuida en puertos TCP:" + puertoTCP + " y UDP:" + puertoUDP);
     }
 
@@ -101,5 +120,72 @@ public class NodoServidor {
 
         NodoServidor nodo = new NodoServidor(id, pTCP, pUDP);
         nodo.iniciar();
+    }
+
+    // Envía un ping UDP "HB;MiID" a todos los demás nodos de la membresía cada 2 segundos
+    private void enviarHeartbeats() {
+        try (DatagramSocket socketHB = new DatagramSocket()) {
+            while (true) {
+                String mensaje = "HB;" + this.idNodo;
+                byte[] data = mensaje.getBytes();
+                
+                for (String[] nodoInfo : LISTA_MEMBRESIA) {
+                    int idDestino = Integer.parseInt(nodoInfo[0]);
+                    if (idDestino != this.idNodo) {
+                        int puertoDestinoHB = Integer.parseInt(nodoInfo[3]) + 1000;
+                        InetAddress ip = InetAddress.getByName(nodoInfo[1]);
+                        DatagramPacket pkt = new DatagramPacket(data, data.length, ip, puertoDestinoHB);
+                        socketHB.send(pkt);
+                    }
+                }
+                Thread.sleep(2000); // Frecuencia del latido
+            }
+        } catch (Exception e) {
+            System.err.println("[Nodo " + idNodo + "] Error enviando heartbeat: " + e.getMessage());
+        }
+    }
+
+    // 2. Escucha pings en el puertoHeartbeat y actualiza la estampa de tiempo
+    private void recibirHeartbeats() {
+        try (DatagramSocket socketEscucha = new DatagramSocket(puertoHeartbeat)) {
+            byte[] buffer = new byte[256];
+            while (true) {
+                DatagramPacket pkt = new DatagramPacket(buffer, buffer.length);
+                socketEscucha.receive(pkt);
+                String msj = new String(pkt.getData(), 0, pkt.getLength());
+                
+                if (msj.startsWith("HB;")) {
+                    int idOrigen = Integer.parseInt(msj.trim().split(";")[1]);
+                    // Actualizamos el reloj de la última vez que vimos vivo a este nodo
+                    heartbeatsRecibidos.put(idOrigen, System.currentTimeMillis());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[Nodo " + idNodo + "] Error recibiendo heartbeat: " + e.getMessage());
+        }
+    }
+
+    private void monitorFallos() {
+        while (true) {
+            try {
+                Thread.sleep(3000); 
+                long tiempoActual = System.currentTimeMillis();
+                
+                for (Integer idOtroNodo : heartbeatsRecibidos.keySet()) {
+                    long ultimoLatido = heartbeatsRecibidos.get(idOtroNodo);
+                    
+                    if (tiempoActual - ultimoLatido > 5000) { 
+                        System.out.println("==============================================");
+                        System.out.println("[ALERTA CRÍTICA] ¡TIMEOUT DETECTADO!");
+                        System.out.println("[Nodo " + idNodo + "] confirma que el NODO " + idOtroNodo + " ha caído (CRASH).");
+                        System.out.println("==============================================");
+
+                        heartbeatsRecibidos.remove(idOtroNodo);
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
