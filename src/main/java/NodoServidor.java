@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -9,16 +10,21 @@ public class NodoServidor {
     private final int puertoTCP;
     private final int puertoUDP;
     private Catalogo baseDeDatos;
-
+    public static int relojLocal = 0;
     // Lista de membresía mínima para coordinar heartbeats entre nodos
-    private static final String[][] LISTA_MEMBRESIA = new String[0][];
-
+    //ivate static final String[][] LISTA_MEMBRESIA = new String[0][];
+    // 1. SOLUCIÓN: Lista de membresía real de la topología
+    private static final String[][] LISTA_MEMBRESIA = {
+        {"1", "127.0.0.1", "5001", "6001"},
+        {"2", "127.0.0.1", "5002", "6002"},
+        {"3", "127.0.0.1", "5003", "6003"}
+    };
     // Utilizamos los mismos pools de hilos que ya tenías en tus servidores por separado
     private final ExecutorService poolTCP = Executors.newFixedThreadPool(10);
     private final ExecutorService poolUDP = Executors.newFixedThreadPool(5);
 
     private final int puertoHeartbeat;
-    private final java.util.Map<Integer, Long> heartbeatsRecibidos = new java.util.HashMap<>();
+    private final ConcurrentHashMap<Integer, Long> heartbeatsRecibidos = new ConcurrentHashMap<>();
 
     public NodoServidor(int idNodo, int puertoTCP, int puertoUDP) {
         this.idNodo = idNodo;
@@ -36,15 +42,17 @@ public class NodoServidor {
             }
         }
     }
-
     private void cargarCatalogo() {
         ArrayList<String> datosPeliculas = new ArrayList<>();
-        // Adaptado de tu ServidorCatalogo.java original
-        try (InputStream is = NodoServidor.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
-             BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-            
-            if (is == null) throw new FileNotFoundException("No se encontró el archivo lista_peliculas.txt");
+        InputStream is = NodoServidor.class.getResourceAsStream("/peliculas/lista_peliculas.txt");
+        
+        if (is == null) {
+            System.err.println("[Nodo " + idNodo + "] ALERTA CRÍTICA: No se encontró /peliculas/lista_peliculas.txt.");
+            this.baseDeDatos = new Catalogo(datosPeliculas, 0); 
+            return;
+        }
 
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
             String linea;
             while ((linea = br.readLine()) != null) {
                 if (!linea.trim().isEmpty()) {
@@ -53,10 +61,10 @@ public class NodoServidor {
             }
             this.baseDeDatos = new Catalogo(datosPeliculas, datosPeliculas.size());
             System.out.println("[Nodo " + idNodo + "] Base de datos cargada: " + datosPeliculas.size() + " películas.");
-
         } catch (Exception e) {
-            System.err.println("[Nodo " + idNodo + "] FALLO CRÍTICO: No se pudo cargar el catálogo.");
+            System.err.println("[Nodo " + idNodo + "] FALLO al leer el catálogo.");
             e.printStackTrace();
+            this.baseDeDatos = new Catalogo(datosPeliculas, 0); 
         }
     }
 
@@ -138,7 +146,7 @@ public class NodoServidor {
                         socketHB.send(pkt);
                     }
                 }
-                Thread.sleep(2000); // Frecuencia del latido
+                Thread.sleep(5000);// Frecuencia del latido
             }
         } catch (Exception e) {
             System.err.println("[Nodo " + idNodo + "] Error enviando heartbeat: " + e.getMessage());
@@ -158,6 +166,7 @@ public class NodoServidor {
                     int idOrigen = Integer.parseInt(msj.trim().split(";")[1]);
                     // Actualizamos el reloj de la última vez que vimos vivo a este nodo
                     heartbeatsRecibidos.put(idOrigen, System.currentTimeMillis());
+                    System.out.println("[Heartbeat] Nodo " + idNodo + " recibió pulso UDP del Nodo " + idOrigen);
                 }
             }
         } catch (Exception e) {
@@ -168,13 +177,13 @@ public class NodoServidor {
     private void monitorFallos() {
         while (true) {
             try {
-                Thread.sleep(3000); 
+                Thread.sleep(2000); 
                 long tiempoActual = System.currentTimeMillis();
                 
                 for (Integer idOtroNodo : heartbeatsRecibidos.keySet()) {
                     long ultimoLatido = heartbeatsRecibidos.get(idOtroNodo);
                     
-                    if (tiempoActual - ultimoLatido > 5000) { 
+                    if (tiempoActual - ultimoLatido > 12000) { 
                         System.out.println("==============================================");
                         System.out.println("[ALERTA CRÍTICA] ¡TIMEOUT DETECTADO!");
                         System.out.println("[Nodo " + idNodo + "] confirma que el NODO " + idOtroNodo + " ha caído (CRASH).");

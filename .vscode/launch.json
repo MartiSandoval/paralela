@@ -53,6 +53,12 @@
             "name": "Ejecutar CLIENTE (Netflix)",
             "request": "launch",
             "mainClass": "Main"
-        }
+        },
+        {
+            "type": "java",
+            "name": "DISPARAR CARGA (Stress Test)",
+            "request": "launch",
+            "mainClass": "GeneradorCarga"
+        }        
     ]
 }
