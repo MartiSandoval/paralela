@@ -5,15 +5,14 @@ public class Mensaje implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private String operacion; 
-    private SealedObject payloadSeguro; // El contenido viaja blindado
+    private SealedObject payloadSeguro; // El contenido viaja blindado con AES
     private int relojLamport; 
-    private int puertoOrigen; 
+    private String idOrigen; 
 
-    // Constructor
-    public Mensaje(String operacion, Serializable payload, int relojLamport, int puertoOrigen) {
+    public Mensaje(String operacion, Serializable payload, int relojLamport, String idOrigen) {
         this.operacion = operacion;
         this.relojLamport = relojLamport;
-        this.puertoOrigen = puertoOrigen;
+        this.idOrigen = idOrigen;
         try {
             this.payloadSeguro = Seguridad.encriptar(payload);
         } catch (Exception e) {
@@ -21,17 +20,14 @@ public class Mensaje implements Serializable {
         }
     }
 
-    // Getters
     public String getOperacion() { return operacion; }
     public int getRelojLamport() { return relojLamport; }
-    public int getPuertoOrigen() { return puertoOrigen; }
+    public String getIdOrigen() { return idOrigen; }
     
-    // Al pedir el payload, se desencripta automáticamente
     public Object getPayload() {
         try {
             return Seguridad.desencriptar(this.payloadSeguro);
         } catch (Exception e) {
-            System.err.println("Intento de intercepción o error al descifrar.");
             return null;
         }
     }
