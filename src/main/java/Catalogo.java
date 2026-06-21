@@ -37,6 +37,6 @@ public class Catalogo {
     }
 
     public ArrayList<Pelicula> getPeliculas() { 
-        return new ArrayList<>(this.peliculas); 
+        return new ArrayList<>(peliculas); 
     }
 }

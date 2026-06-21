@@ -38,7 +38,7 @@ public class Cliente implements Runnable {
                 if (socketCliente != null && !socketCliente.isClosed()) {
                     socketCliente.close();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.err.println("Error cerrando socket: " + e.getMessage());
             }
         }
