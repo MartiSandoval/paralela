@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger; // IMPORTANTE PARA EL RELOJ
 
 public class NodoServidor {
     private final int idNodo;
@@ -19,6 +20,20 @@ public class NodoServidor {
         {"2", "127.0.0.1", "5002", "6002"},
         {"3", "127.0.0.1", "5003", "6003"}
     };
+
+    // --- LÓGICA DEL RELOJ DE LAMPORT (REQUISITO 2.2) ---
+    public static AtomicInteger relojLamport = new AtomicInteger(0);
+
+    public static void registrarEventoLocal(String evento, int idNodo) {
+        int tiempoActual = relojLamport.incrementAndGet();
+        System.out.println("[LAMPORT T=" + tiempoActual + " | Nodo " + idNodo + "] " + evento);
+    }
+
+    public static void sincronizarReloj(int relojExterno, String evento, int idNodo) {
+        int tiempoActual = relojLamport.updateAndGet(tiempoLocal -> Math.max(tiempoLocal, relojExterno) + 1);
+        System.out.println("[LAMPORT T=" + tiempoActual + " | Nodo " + idNodo + "] Sincronización: " + evento);
+    }
+    // ----------------------------------------------------
 
     public NodoServidor(int idNodo, int puertoTCP, int puertoUDP) {
         this.idNodo = idNodo;

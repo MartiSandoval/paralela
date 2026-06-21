@@ -13,6 +13,19 @@ public class Main {
     private static int nodoActual = 0; 
     private static Scanner sc = new Scanner(System.in);
 
+    // --- RELOJ DE LAMPORT DEL CLIENTE ---
+    private static int relojLamport = 0;
+
+    private synchronized static void eventoLocal(String evento) {
+        relojLamport++;
+        System.out.println("[LAMPORT T=" + relojLamport + " | Cliente Netflix] " + evento);
+    }
+
+    private synchronized static void sincronizarReloj(int relojExterno, String evento) {
+        relojLamport = Math.max(relojLamport, relojExterno) + 1;
+        System.out.println("[LAMPORT T=" + relojLamport + " | Cliente Netflix] Sincronización: " + evento);
+    }
+
     public static void main(String[] args) {
         ArrayList<Pelicula> p = solicitarCatalogo();
         if(p == null || p.isEmpty()) {
@@ -36,6 +49,10 @@ public class Main {
             System.out.print("\nSeleccione una opción: ");
             
             int op = sc.nextInt();
+            
+            // CORRECCIÓN 1: Llamada correcta al método de evento local
+            eventoLocal("Usuario seleccionó opción " + op); 
+            
             if (op == 0) { 
                 System.out.println("Saliendo del sistema...");
                 ejecutar = false; 
@@ -65,6 +82,7 @@ public class Main {
         
         int opcion = sc.nextInt();
         if (opcion == 1) {
+            eventoLocal("Usuario inició reproducción de: " + p.getTitulo());
             System.out.println("Reproduciendo: " + p.getTitulo());
             iniciarStreaming(p.getPath());
         }
@@ -81,9 +99,19 @@ public class Main {
                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-                out.writeUTF("SOLICITAR_CATALOGO");
+                
+                // CORRECCIÓN 2: Uso de la clase Mensaje para el envío
+                eventoLocal("Enviando petición SOLICITAR_CATALOGO al Nodo " + (nodoActual + 1));
+                Mensaje msjSalida = new Mensaje("SOLICITAR_CATALOGO", null, relojLamport, puertoTCP);
+                out.writeObject(msjSalida);
                 out.flush();
-                return (ArrayList<Pelicula>) in.readObject();
+                
+                // Recepción del objeto Mensaje y sincronización del reloj
+                Mensaje msjEntrada = (Mensaje) in.readObject();
+                sincronizarReloj(msjEntrada.getRelojLamport(), "Catálogo descargado con éxito");
+                
+                return (ArrayList<Pelicula>) msjEntrada.getPayload();
+                
             } catch (Exception e) {
                 System.out.println("[Tolerancia a fallos] Nodo " + (nodoActual + 1) + " no responde. Saltando al siguiente nodo...");
                 nodoActual = (nodoActual + 1) % NODOS_CONOCIDOS.length;
@@ -103,9 +131,19 @@ public class Main {
                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-                out.writeUTF("VER_DETALLE;" + titulo);
+                
+                // CORRECCIÓN 3: Envío del título dentro del Payload del Mensaje
+                eventoLocal("Solicitando detalles de la película: " + titulo);
+                Mensaje msjSalida = new Mensaje("VER_DETALLE", titulo, relojLamport, puertoTCP); 
+                out.writeObject(msjSalida);
                 out.flush();
-                return (Pelicula) in.readObject();
+                
+                // Recepción y sincronización
+                Mensaje msjEntrada = (Mensaje) in.readObject();
+                sincronizarReloj(msjEntrada.getRelojLamport(), "Detalles recibidos de Nodo " + (nodoActual + 1));
+                
+                return (Pelicula) msjEntrada.getPayload();
+                
             } catch (Exception e) {
                 System.out.println("[Tolerancia a fallos] Nodo " + (nodoActual + 1) + " caído al pedir detalles. Rotando...");
                 nodoActual = (nodoActual + 1) % NODOS_CONOCIDOS.length;
@@ -129,7 +167,7 @@ public class Main {
             socketUDP.send(new DatagramPacket(data, data.length, InetAddress.getByName(ip), puertoUDP));
 
             System.out.println("Iniciando recepción de datos por UDP desde el Nodo " + (nodoActual + 1) + "...");
-            byte[] buffer = new byte[64000]; // Ajustado para coincidir con los 64000 de Streaming.java
+            byte[] buffer = new byte[64000]; 
             int paquetesRecibidos = 0;
             
             while (true) {

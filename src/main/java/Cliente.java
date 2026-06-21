@@ -12,35 +12,36 @@ public class Cliente implements Runnable {
 
     @Override
     public void run() {
+        int idNodoTemp = socketCliente.getLocalPort() - 5000; 
+        
         try (ObjectOutputStream out = new ObjectOutputStream(socketCliente.getOutputStream())) {
             out.flush();
             ObjectInputStream in = new ObjectInputStream(socketCliente.getInputStream());
             
-            String peticion = in.readUTF();
-            System.out.println("Petición recibida del cliente: " + peticion);
+            Mensaje peticion = (Mensaje) in.readObject();
+            
+            NodoServidor.sincronizarReloj(peticion.getRelojLamport(), "Petición recibida: " + peticion.getOperacion(), idNodoTemp);
 
-            if (peticion.equals("SOLICITAR_CATALOGO")) {
-                // Aquí enviamos la copia limpia que acabamos de arreglar
-                out.writeObject(baseDeDatos.getPeliculas());
+            Mensaje respuesta = null;
+
+            if (peticion.getOperacion().equals("SOLICITAR_CATALOGO")) {
+                NodoServidor.registrarEventoLocal("Empaquetando catálogo de películas", idNodoTemp);
+                respuesta = new Mensaje("RESPUESTA_CATALOGO", baseDeDatos.getPeliculas(), NodoServidor.relojLamport.get());
             } 
-            else if (peticion.startsWith("VER_DETALLE")) {
-                String titulo = peticion.split(";")[1];
+            else if (peticion.getOperacion().equals("VER_DETALLE")) {
+                String titulo = (String) peticion.getPayload(); 
+                NodoServidor.registrarEventoLocal("Consultando base de datos para: " + titulo, idNodoTemp);
                 Pelicula p = baseDeDatos.getPeliculaPorTitulo(titulo);
-                out.writeObject(p);
+                respuesta = new Mensaje("RESPUESTA_DETALLE", p, NodoServidor.relojLamport.get());
             }
+            
+            out.writeObject(respuesta);
             out.flush();
 
         } catch (Exception e) {
-            System.err.println("Error procesando la petición del cliente:");
-            e.printStackTrace(); 
+            System.err.println("Error procesando la petición del cliente: " + e.getMessage());
         } finally {
-            try {
-                if (socketCliente != null && !socketCliente.isClosed()) {
-                    socketCliente.close();
-                }
-            } catch (Exception e) {
-                System.err.println("Error cerrando socket: " + e.getMessage());
-            }
+            try { if (socketCliente != null) socketCliente.close(); } catch (Exception e) {}
         }
     }
 }
