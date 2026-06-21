@@ -5,8 +5,7 @@
             "type": "java",
             "name": "GeneradorCarga",
             "request": "launch",
-            "mainClass": "GeneradorCarga",
-            "projectName": "streaming-platform"
+            "mainClass": "GeneradorCarga"
         },
         {
             "type": "java",
