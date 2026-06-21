@@ -30,7 +30,6 @@ public class Cliente implements Runnable {
             }
             out.flush();
 
-        // CAMBIO CLAVE: Atrapamos Exception en lugar de IOException para ver TODO
         } catch (Exception e) {
             System.err.println("Error procesando la petición del cliente:");
             e.printStackTrace(); 

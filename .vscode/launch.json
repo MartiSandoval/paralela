@@ -1,27 +1,52 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "type": "java",
+            "name": "ServidorVideo",
+            "request": "launch",
+            "mainClass": "ServidorVideo",
+            "projectName": "streaming-platform"
+        },
+        {
+            "type": "java",
+            "name": "ServidorCatalogo",
+            "request": "launch",
+            "mainClass": "ServidorCatalogo",
+            "projectName": "streaming-platform"
+        },
         {
             "type": "java",
             "name": "Levantar NODO 1",
             "request": "launch",
             "mainClass": "NodoServidor",
-            "args": ["1", "5001", "6001"]
+            "args": [
+                "1",
+                "5001",
+                "6001"
+            ]
         },
         {
             "type": "java",
             "name": "Levantar NODO 2",
             "request": "launch",
             "mainClass": "NodoServidor",
-            "args": ["2", "5002", "6002"]
+            "args": [
+                "2",
+                "5002",
+                "6002"
+            ]
         },
         {
             "type": "java",
             "name": "Levantar NODO 3",
             "request": "launch",
             "mainClass": "NodoServidor",
-            "args": ["3", "5003", "6003"]
+            "args": [
+                "3",
+                "5003",
+                "6003"
+            ]
         },
         {
             "type": "java",
