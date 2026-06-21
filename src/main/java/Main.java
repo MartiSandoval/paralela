@@ -10,13 +10,18 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
+    // Topología unificada (IP, TCP, UDP)
     private static final String[][] NODOS_CONOCIDOS = {
-        {"127.0.0.1", "5001", "6001"}, // Nodo 1: IP, TCP, UDP
+        {"127.0.0.1", "5001", "6001"}, // Nodo 1
         {"127.0.0.1", "5002", "6002"}, // Nodo 2
         {"127.0.0.1", "5003", "6003"}  // Nodo 3
     };
+    
     private static int nodoActualIndex = 0; 
     private static Scanner sc = new Scanner(System.in);
+    
+    // RECUPERADO: El reloj lógico del cliente para la Unidad 5
+    public static int relojCliente = 0; 
 
     public static void main(String[] args) {
         ArrayList<Pelicula> p = solicitarCatalogo();
@@ -75,23 +80,30 @@ public class Main {
 
     @SuppressWarnings("unchecked")
     private static ArrayList<Pelicula> solicitarCatalogo() {
+        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
+        
         while (intentos < NODOS_CONOCIDOS.length) {
             String ip = NODOS_CONOCIDOS[nodoActualIndex][0];
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActualIndex][1]);
             
-            try(Socket s = new Socket(ip, puertoTCP);
-                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            try (Socket s = new Socket(ip, puertoTCP);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
+                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
+                out.writeObject(msjEnvio);
                 out.flush();
-                ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-                out.writeUTF("SOLICITAR_CATALOGO");
-                out.flush();
-                return (ArrayList<Pelicula>) in.readObject();
+                
+                // RECUPERADO: Deserialización segura y sincronización de reloj
+                Mensaje msjRecibido = (Mensaje) in.readObject();
+                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                
+                return (ArrayList<Pelicula>) msjRecibido.getPayload();
+                
             } catch (Exception e) {
                 System.err.println("\n[Tolerancia a fallos] Falló el Nodo " + (nodoActualIndex + 1));
-                // ESTA LÍNEA ES VITAL PARA DEBUGGEAR:
-                e.printStackTrace(); 
-                
                 nodoActualIndex = (nodoActualIndex + 1) % NODOS_CONOCIDOS.length;
                 intentos++;
             }
@@ -100,18 +112,28 @@ public class Main {
     }
 
     private static Pelicula solicitarInfoPelicula(String titulo) {
+        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
+        
         while (intentos < NODOS_CONOCIDOS.length) {
             String ip = NODOS_CONOCIDOS[nodoActualIndex][0];
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActualIndex][1]);
 
-            try(Socket s = new Socket(ip, puertoTCP);
-                ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
+            try (Socket s = new Socket(ip, puertoTCP);
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                
+                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
+                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
+                out.writeObject(msjEnvio);
                 out.flush();
-                ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-                out.writeUTF("VER_DETALLE;" + titulo);
-                out.flush();
-                return (Pelicula) in.readObject();
+                
+                // RECUPERADO: Deserialización segura y sincronización de reloj
+                Mensaje msjRecibido = (Mensaje) in.readObject();
+                relojCliente = Math.max(relojCliente, msjRecibido.getRelojLamport()) + 1;
+                
+                return (Pelicula) msjRecibido.getPayload();
+                
             } catch (Exception e) {
                 System.out.println("[Tolerancia a fallos] Nodo " + (nodoActualIndex + 1) + " caído al pedir detalles. Rotando...");
                 nodoActualIndex = (nodoActualIndex + 1) % NODOS_CONOCIDOS.length;
