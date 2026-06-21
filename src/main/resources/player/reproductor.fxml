@@ -4,33 +4,78 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Slider?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.media.MediaView?>
+<?import javafx.scene.shape.SVGPath?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="850.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="player.ReproductorController">
-   <center>
-      <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="200.0" BorderPane.alignment="BOTTOM_CENTER" />
-   </center>
-   <bottom>
-      <VBox prefHeight="120.0" prefWidth="850.0" BorderPane.alignment="CENTER">
+<StackPane fx:id="root" styleClass="reproductor-root" stylesheets="@app.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ReproductorController">
+   <children>
+      <StackPane fx:id="contenedorVideo" styleClass="contenedor-video">
          <children>
-            <HBox alignment="CENTER" prefHeight="44.0" prefWidth="850.0" pickOnBounds="false">
+            <MediaView fx:id="mediaView" />
+         </children>
+      </StackPane>
+
+      <VBox fx:id="overlayControles" pickOnBounds="false">
+         <children>
+            <HBox fx:id="barraSuperior" alignment="CENTER_LEFT" minHeight="52.0" prefHeight="52.0" styleClass="barra-flotante-superior">
                <children>
-                  <Slider fx:id="slider" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="btnVolver" mnemonicParsing="false" onMouseClicked="#btnVolver" styleClass="btn-volver" text="‹ Volver al catálogo" />
                </children>
                <padding>
-                  <Insets left="15.0" right="15.0" />
+                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
                </padding>
             </HBox>
-            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <VBox fx:id="barraInferior" styleClass="barra-flotante-inferior">
                <children>
-                  <Button fx:id="btnPlay" mnemonicParsing="false" onMouseClicked="#btnPlay" text="Reproducir" />
-                  <Label fx:id="lblDuration" text="00:00 / 00:00" />
+                  <HBox alignment="CENTER" pickOnBounds="false">
+                     <children>
+                        <Slider fx:id="slider" styleClass="slider-reproductor" HBox.hgrow="ALWAYS" />
+                     </children>
+                     <padding>
+                        <Insets left="20.0" right="20.0" />
+                     </padding>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" spacing="14.0">
+                     <children>
+                        <Button fx:id="btnPlay" mnemonicParsing="false" onMouseClicked="#btnPlay" styleClass="btn-icono">
+                           <graphic>
+                              <SVGPath fx:id="iconoPlay" styleClass="icono-svg" content="M8 5v14l11-7z" />
+                           </graphic>
+                        </Button>
+                        <Label fx:id="lblDuration" styleClass="lbl-duracion" text="00:00 / 00:00" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="btnImagenNoCarga" mnemonicParsing="false" onMouseClicked="#btnImagenNoCarga" styleClass="btn-icono" textOverrun="CLIP">
+                           <graphic>
+                              <SVGPath styleClass="icono-svg" content="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L14 11h7V4l-3.35 2.35z" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="La imagen está congelada" />
+                           </tooltip>
+                        </Button>
+                        <Button fx:id="btnFullscreen" mnemonicParsing="false" onMouseClicked="#btnFullscreen" styleClass="btn-icono">
+                           <graphic>
+                              <SVGPath fx:id="iconoFullscreen" styleClass="icono-svg" content="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                           </graphic>
+                           <tooltip>
+                              <Tooltip text="Pantalla completa" />
+                           </tooltip>
+                        </Button>
+                     </children>
+                     <padding>
+                        <Insets bottom="14.0" left="20.0" right="20.0" top="6.0" />
+                     </padding>
+                  </HBox>
                </children>
-            </HBox>
+            </VBox>
          </children>
       </VBox>
-   </bottom>
-</BorderPane>
+   </children>
+</StackPane>

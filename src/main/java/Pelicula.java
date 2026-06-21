@@ -13,7 +13,7 @@ public class Pelicula implements Serializable{
 
     public boolean getPelicula(String titulo, ArrayList<String> director, Integer año, ArrayList<String> generos) {
         try {
-            this.path = Paths.get(Main.class.getResource("/peliculas/" + titulo.replace(" ", "-") + ".mp4").toURI()).toString();
+            this.path = Paths.get(Pelicula.class.getResource("/peliculas/" + titulo.replace(" ", "-") + ".mp4").toURI()).toString();
             
             if(this.path == null) {
                 throw new Exception("Archivo no encontrado para la película: " + titulo);

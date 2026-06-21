@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="root" prefHeight="650.0" prefWidth="900.0" stylesheets="@app.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CatalogoController">
+   <children>
+      <BorderPane styleClass="contenedor-catalogo">
+         <top>
+            <VBox styleClass="barra-titulo" BorderPane.alignment="CENTER">
+               <children>
+                  <Label styleClass="titulo-app" text="Catálogo" />
+                  <Label fx:id="lblEstado" styleClass="subtitulo-app" text="Cargando catálogo..." />
+               </children>
+            </VBox>
+         </top>
+         <center>
+            <ScrollPane fitToWidth="true" styleClass="contenedor-catalogo" BorderPane.alignment="CENTER">
+               <content>
+                  <FlowPane fx:id="grillaPeliculas" styleClass="grilla-peliculas" />
+               </content>
+            </ScrollPane>
+         </center>
+      </BorderPane>
+      <VBox fx:id="overlayCarga" alignment="CENTER" spacing="16.0" styleClass="overlay-carga" visible="false">
+         <children>
+            <ProgressIndicator styleClass="indicador-carga" />
+            <Label fx:id="lblOverlayCarga" styleClass="overlay-carga-texto" text="Preparando película..." />
+         </children>
+      </VBox>
+   </children>
+</StackPane>

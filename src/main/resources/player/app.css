@@ -1,0 +1,182 @@
+/*
+ * Paleta: sala de cine a oscuras.
+ * Fondo casi-negro (no negro puro, para que las tarjetas y el reproductor
+ * no se fundan con el borde de la ventana). Acento calido (naranja-rojo,
+ * distinto del rojo de marca de servicios conocidos) para llamadas a la accion.
+ */
+.root {
+    -fondo-base: #0E0D10;
+    -fondo-area-contenido: #121114;
+    -fondo-tarjeta: #232228;
+    -fondo-tarjeta-hover: #2D2C33;
+    -acento: #E8542E;
+    -acento-hover: #FF6B43;
+    -texto-principal: #F2EFE9;
+    -texto-secundario: #8C8893;
+
+    -fx-background-color: -fondo-base;
+    -fx-font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+/* ---------- Catalogo ---------- */
+
+.barra-titulo {
+    -fx-background-color: -fondo-base;
+    -fx-padding: 24 32 16 32;
+}
+
+.titulo-app {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -texto-principal;
+    -fx-letter-spacing: 1px;
+}
+
+.subtitulo-app {
+    -fx-font-size: 13px;
+    -fx-text-fill: -texto-secundario;
+}
+
+.contenedor-catalogo {
+    -fx-background-color: -fondo-area-contenido;
+}
+
+.contenedor-catalogo > .viewport {
+    -fx-background-color: -fondo-area-contenido;
+}
+
+.grilla-peliculas {
+    -fx-background-color: transparent;
+    -fx-padding: 16 32 32 32;
+    -fx-hgap: 18;
+    -fx-vgap: 18;
+}
+
+.tarjeta-pelicula {
+    -fx-background-color: -fondo-tarjeta;
+    -fx-background-radius: 6;
+    -fx-padding: 16;
+    -fx-pref-width: 220;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+}
+
+.tarjeta-pelicula:hover {
+    -fx-background-color: -fondo-tarjeta-hover;
+    -fx-border-color: -acento;
+}
+
+.tarjeta-titulo {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -texto-principal;
+    -fx-wrap-text: true;
+}
+
+.tarjeta-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: -texto-secundario;
+}
+
+.tarjeta-generos {
+    -fx-font-size: 11px;
+    -fx-text-fill: -acento;
+}
+
+.estado-carga {
+    -fx-font-size: 14px;
+    -fx-text-fill: -texto-secundario;
+}
+
+.overlay-carga {
+    -fx-background-color: rgba(14, 13, 16, 0.92);
+}
+
+.overlay-carga-texto {
+    -fx-font-size: 15px;
+    -fx-text-fill: -texto-principal;
+}
+
+.indicador-carga {
+    -fx-accent: #E8542E;
+}
+
+.indicador-carga .percentage {
+    -fx-fill: transparent;
+}
+
+/* ---------- Reproductor ---------- */
+
+.reproductor-root {
+    -fx-background-color: black;
+}
+
+.contenedor-video {
+    -fx-background-color: black;
+}
+
+.barra-flotante-superior {
+    -fx-background-color: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+}
+
+.barra-flotante-inferior {
+    -fx-background-color: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+}
+
+.btn-volver {
+    -fx-background-color: transparent;
+    -fx-text-fill: -texto-principal;
+    -fx-font-size: 13px;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.btn-volver:hover {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-text-fill: -acento;
+}
+
+/* Botones circulares de icono (play/pausa, "imagen no carga", fullscreen),
+   estilo YouTube: sin relleno por defecto, fondo sutil al pasar el mouse. */
+.btn-icono {
+    -fx-background-color: transparent;
+    -fx-background-radius: 50%;
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-max-width: 38px;
+    -fx-max-height: 38px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.btn-icono:hover {
+    -fx-background-color: rgba(255,255,255,0.15);
+}
+
+.btn-icono:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+}
+
+.icono-svg {
+    -fx-fill: -texto-principal;
+}
+
+.lbl-duracion {
+    -fx-text-fill: -texto-principal;
+    -fx-font-size: 13px;
+}
+
+.slider-reproductor .track {
+    -fx-background-color: rgba(255,255,255,0.3);
+    -fx-pref-height: 4px;
+}
+
+.slider-reproductor .thumb {
+    -fx-background-color: -acento;
+    -fx-pref-width: 13px;
+    -fx-pref-height: 13px;
+}
