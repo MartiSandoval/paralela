@@ -1,9 +1,51 @@
 {
     "version": "0.2.0",
     "configurations": [
-        { "type": "java", "name": "Nodo 1", "request": "launch", "mainClass": "NodoServidor", "args": ["1", "5001", "6001"] },
-        { "type": "java", "name": "Nodo 2", "request": "launch", "mainClass": "NodoServidor", "args": ["2", "5002", "6002"] },
-        { "type": "java", "name": "Nodo 3", "request": "launch", "mainClass": "NodoServidor", "args": ["3", "5003", "6003"] },
-        { "type": "java", "name": "Cliente Netflix", "request": "launch", "mainClass": "Main" }
+        {
+            "type": "java",
+            "name": "GeneradorCarga",
+            "request": "launch",
+            "mainClass": "GeneradorCarga",
+            "projectName": "streaming-platform"
+        },
+        {
+            "type": "java",
+            "name": "Nodo 1",
+            "request": "launch",
+            "mainClass": "NodoServidor",
+            "args": [
+                "1",
+                "5001",
+                "6001"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Nodo 2",
+            "request": "launch",
+            "mainClass": "NodoServidor",
+            "args": [
+                "2",
+                "5002",
+                "6002"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Nodo 3",
+            "request": "launch",
+            "mainClass": "NodoServidor",
+            "args": [
+                "3",
+                "5003",
+                "6003"
+            ]
+        },
+        {
+            "type": "java",
+            "name": "Cliente Netflix",
+            "request": "launch",
+            "mainClass": "Main"
+        }
     ]
 }

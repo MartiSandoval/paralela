@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    // Membresía conocida por el cliente (Transparencia de ubicación)
     private static final String[][] NODOS_CONOCIDOS = {
         {"127.0.0.1", "5001", "6001"},
         {"127.0.0.1", "5002", "6002"},
@@ -89,7 +88,6 @@ public class Main {
 
     @SuppressWarnings("unchecked")
     private static ArrayList<Pelicula> solicitarCatalogo() {
-        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
         
         while (intentos < NODOS_CONOCIDOS.length) {
@@ -97,17 +95,12 @@ public class Main {
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
             
             try (Socket s = new Socket(ip, puertoTCP);
-                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
                 
-                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
-                Mensaje msjEnvio = new Mensaje("SOLICITAR_CATALOGO", null, relojCliente, 0);
-                out.writeObject(msjEnvio);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 
                 eventoLocal("Enviando petición SOLICITAR_CATALOGO al Nodo " + (nodoActual + 1));
-                // CORRECCIÓN: El 4to parámetro ahora es un String
                 Mensaje msjSalida = new Mensaje("SOLICITAR_CATALOGO", null, relojLamport, "Cliente Netflix");
                 out.writeObject(msjSalida);
                 out.flush();
@@ -127,7 +120,6 @@ public class Main {
     }
 
     private static Pelicula solicitarInfoPelicula(String titulo) {
-        relojCliente++; // RECUPERADO: Avanzar reloj
         int intentos = 0;
         
         while (intentos < NODOS_CONOCIDOS.length) {
@@ -135,17 +127,12 @@ public class Main {
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
 
             try (Socket s = new Socket(ip, puertoTCP);
-                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(s.getInputStream())) {
+                 ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream())) {
                 
-                // RECUPERADO: Envío mediante la clase Mensaje en lugar de writeUTF
-                Mensaje msjEnvio = new Mensaje("VER_DETALLE", titulo, relojCliente, 0);
-                out.writeObject(msjEnvio);
                 out.flush();
                 ObjectInputStream in = new ObjectInputStream(s.getInputStream());
                 
                 eventoLocal("Solicitando detalles de la película: " + titulo);
-                // CORRECCIÓN: El 4to parámetro ahora es un String
                 Mensaje msjSalida = new Mensaje("VER_DETALLE", titulo, relojLamport, "Cliente Netflix"); 
                 out.writeObject(msjSalida);
                 out.flush();
@@ -205,3 +192,4 @@ public class Main {
         }
     }
 }
+
