@@ -23,6 +23,7 @@ public class NodoServidor {
     };
 
     public static AtomicInteger relojLamport = new AtomicInteger(0);
+    private final AtomicInteger contadorLatidosRecibidos = new AtomicInteger(0);
 
     public static void registrarEventoLocal(String evento, int idNodo) {
         int tiempoActual = relojLamport.incrementAndGet();
@@ -35,8 +36,20 @@ public class NodoServidor {
     }
 
     // --- ALGORITMO BULLY ---
-    public static int coordinadorActual = 3; 
-    private boolean esperandoOK = false;
+    // No se asume ningun coordinador de antemano: arranca en 0 (ningun ID
+    // real de nodo es 0, asi que cualquier nodo activo "le gana" a este
+    // valor inicial hasta que la primera eleccion real lo reemplace).
+    public static int coordinadorActual = 0;
+    private volatile boolean esperandoOK = false;
+    /**
+     * Distinto de esperandoOK: esperandoOK solo cubre la ventana en la que
+     * se espera respuesta a un ELECTION propio. eleccionEnCurso cubre todo
+     * el proceso, desde que este nodo decide que el coordinador actual ya
+     * no es valido hasta que la eleccion se resuelve (gane este nodo u otro).
+     * Se usa solo para no seguir logueando "esperando latido del viejo
+     * coordinador" mientras la eleccion ya esta en marcha.
+     */
+    private volatile boolean eleccionEnCurso = false;
     private long ultimoLatidoCoordinador = System.currentTimeMillis();
 
     public NodoServidor(int idNodo, int puertoTCP, int puertoUDP) {
@@ -67,13 +80,26 @@ public class NodoServidor {
         new Thread(this::escucharUDP).start();
         new Thread(this::escucharCoordinacion).start();
         new Thread(this::monitorCoordinador).start();
-        
+
         System.out.println("[Nodo " + idNodo + "] Operando -> TCP: " + puertoTCP + " | UDP: " + puertoUDP);
-        if (this.idNodo == coordinadorActual) {
-            System.out.println("==================================================");
-            System.out.println("[BULLY] === SOY EL COORDINADOR INICIAL ===");
-            System.out.println("==================================================");
-        }
+
+        // No se asume ningun coordinador de antemano: este nodo dispara su
+        // propia eleccion al arrancar, igual que si hubiera detectado un
+        // timeout. Asi, sin importar el orden en que se inicien los nodos,
+        // el de mayor ID entre los que esten realmente corriendo termina
+        // autoproclamandose coordinador via el mismo mecanismo de siempre.
+        // Se espera un momento antes de disparar la eleccion para darle
+        // tiempo al socket de coordinacion (escucharCoordinacion) a estar
+        // escuchando, ya que corre en su propio hilo recien lanzado arriba.
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            iniciarEleccion();
+        }).start();
     }
 
     private void escucharTCP() {
@@ -113,51 +139,90 @@ public class NodoServidor {
 
                 if (comando.equals("LATIDO") && idOrigen == coordinadorActual) {
                     ultimoLatidoCoordinador = System.currentTimeMillis();
+                    if (contadorLatidosRecibidos.incrementAndGet() % 5 == 0) {
+                        System.out.println("[BULLY | Nodo " + idNodo + "] Latido recibido de Nodo " + idOrigen);
+                    }
                 } 
                 else if (comando.equals("ELECTION")) {
                     if (this.idNodo > idOrigen) {
                         enviarMensajeCoordinacion("OK;" + this.idNodo, idOrigen);
-                        iniciarEleccion(); 
+                        // Siempre se responde OK al remitente de menor ID (eso
+                        // es necesario para que el ceda el paso), pero solo se
+                        // relanza el proceso completo de eleccion si no habia
+                        // una ya en marcha. Sin esta guarda, recibir ELECTION
+                        // de varios nodos en una ventana corta dispara
+                        // iniciarEleccion() multiples veces, duplicando logs
+                        // y dejando varios hilos de timeout de 3s corriendo
+                        // en paralelo sin necesidad.
+                        if (!eleccionEnCurso) {
+                            iniciarEleccion();
+                        }
                     }
                 } 
                 else if (comando.equals("OK")) {
-                    esperandoOK = false;
+                    manejarOkRecibido(idOrigen);
                 } 
                 else if (comando.equals("COORDINADOR")) {
-                    coordinadorActual = idOrigen;
-                    esperandoOK = false;
-                    ultimoLatidoCoordinador = System.currentTimeMillis(); 
-                    System.out.println("[BULLY] El NODO " + coordinadorActual + " es el NUEVO COORDINADOR.");
+                    manejarCoordinadorRecibido(idOrigen);
                 }
             }
         } catch (Exception e) {}
     }
 
+    private synchronized void manejarOkRecibido(int idOrigen) {
+        esperandoOK = false;
+    }
+
+    private synchronized void manejarCoordinadorRecibido(int idOrigen) {
+        coordinadorActual = idOrigen;
+        esperandoOK = false;
+        eleccionEnCurso = false;
+        ultimoLatidoCoordinador = System.currentTimeMillis();
+        System.out.println("[BULLY] El NODO " + coordinadorActual + " es el NUEVO COORDINADOR.");
+    }
+
     private void monitorCoordinador() {
+        int contadorCiclos = 0;
         while (true) {
             try {
-                Thread.sleep(2000); 
-                
+                Thread.sleep(2000);
+                contadorCiclos++;
+                boolean tocaLoguear = (contadorCiclos % 5 == 0);
+
                 if (this.idNodo == coordinadorActual) {
                     for (String[] nodo : LISTA_MEMBRESIA) {
                         int idDestino = Integer.parseInt(nodo[0]);
                         if (idDestino != this.idNodo) {
                             enviarMensajeCoordinacion("LATIDO;" + this.idNodo, idDestino);
+                            if (tocaLoguear) {
+                                System.out.println("[BULLY | Nodo " + idNodo + "] Latido enviado a Nodo " + idDestino);
+                            }
                         }
                     }
                 } else {
                     long tiempoInactivo = System.currentTimeMillis() - ultimoLatidoCoordinador;
-                    if (tiempoInactivo > 5000 && !esperandoOK) {
-                        System.err.println("\n[ALERTA] ¡TIMEOUT! Coordinador " + coordinadorActual + " ha caído.");
-                        iniciarEleccion();
+                    if (eleccionEnCurso) {
+                        if (tocaLoguear) {
+                            System.out.println("[BULLY | Nodo " + idNodo + "] Eleccion en curso, coordinador " + coordinadorActual + " ya no es valido.");
+                        }
+                    } else {
+                        if (tocaLoguear && tiempoInactivo > 3000) {
+                            System.out.println("[BULLY | Nodo " + idNodo + "] Esperando latido de Nodo " + coordinadorActual
+                                + " (ultimo hace " + tiempoInactivo + " ms)");
+                        }
+                        if (tiempoInactivo > 5000 && !esperandoOK) {
+                            System.err.println("[¡ALERTA!] ¡TIMEOUT! Coordinador " + coordinadorActual + " ha caído.");
+                            iniciarEleccion();
+                        }
                     }
                 }
             } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         }
     }
 
-    private void iniciarEleccion() {
+    private synchronized void iniciarEleccion() {
         System.out.println("[BULLY | Nodo " + idNodo + "] Iniciando elección...");
+        eleccionEnCurso = true;
         esperandoOK = true;
         boolean soyElMayor = true;
 
@@ -180,9 +245,10 @@ public class NodoServidor {
         }
     }
 
-    private void anunciarVictoria() {
+    private synchronized void anunciarVictoria() {
         coordinadorActual = this.idNodo;
         esperandoOK = false;
+        eleccionEnCurso = false;
         System.out.println("[BULLY] SOY EL NUEVO COORDINADOR.");
         for (String[] nodo : LISTA_MEMBRESIA) {
             int idDestino = Integer.parseInt(nodo[0]);
