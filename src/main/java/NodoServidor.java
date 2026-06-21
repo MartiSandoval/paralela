@@ -28,7 +28,7 @@ public class NodoServidor {
     public static void registrarEventoLocal(String evento, int idNodo) {
         int tiempoActual = relojLamport.incrementAndGet();
         // Solo imprimimos si no estamos saturados de carga para no frenar la consola
-        if (tiempoActual % 100 == 0) System.out.println("[LAMPORT T=" + tiempoActual + " | Nodo " + idNodo + "] " + evento);
+        if (tiempoActual % 100 == 0) System.out.println("[LAMPORT T=" + tiempoActual + " | Nodo " + idNodo + "] " + evento + "\n");
     }
 
     public static void sincronizarReloj(int relojExterno, String evento, int idNodo) {

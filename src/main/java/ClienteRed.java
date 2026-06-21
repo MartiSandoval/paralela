@@ -24,12 +24,12 @@ public class ClienteRed {
 
     private static synchronized void eventoLocal(String evento) {
         relojLamport++;
-        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] " + evento);
+        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] " + evento + "\n");
     }
 
     private static synchronized void sincronizarReloj(int relojExterno, String evento) {
         relojLamport = Math.max(relojLamport, relojExterno) + 1;
-        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] Sincronizacion: " + evento);
+        System.out.println("[LAMPORT T=" + relojLamport + " | " + ID_CLIENTE + "] Sincronizacion: " + evento + "\n");
     }
 
     @SuppressWarnings("unchecked")

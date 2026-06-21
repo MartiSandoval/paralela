@@ -3,9 +3,9 @@
     "configurations": [
         {
             "type": "java",
-            "name": "PruebaNodos",
+            "name": "DiagFlujoApp",
             "request": "launch",
-            "mainClass": "PruebaNodos",
+            "mainClass": "DiagnosticoFlujoApp",
             "projectName": "paralela"
         },
         {

@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneradorCarga {
-    // Parámetros de la Sección 3 de la rúbrica
     private static final int HILOS_CONCURRENTES = 50;
     private static final int TIEMPO_PRUEBA_SEGUNDOS = 60;
     
