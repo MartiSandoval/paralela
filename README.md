@@ -1,5 +1,7 @@
 # paralela-proyecto
 
+Para el proyecto es importante tener Maven, en caso de no, instalarlo y agregarlo a las variables de entorno.
+
 ## Ejecución
 
 1. Ejecutar en cmd: `mvn clean compile`.
