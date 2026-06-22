@@ -65,7 +65,6 @@ public class ClienteRed {
 
     public static synchronized Pelicula solicitarInfoPelicula(String titulo) {
         int intentos = 0;
-
         while (intentos < NODOS_CONOCIDOS.length) {
             String ip = NODOS_CONOCIDOS[nodoActual][0];
             int puertoTCP = Integer.parseInt(NODOS_CONOCIDOS[nodoActual][1]);
@@ -93,21 +92,6 @@ public class ClienteRed {
         return null;
     }
 
-    /**
-     * Pide el streaming UDP de una pelicula al nodo actual y lo vuelca en
-     * buffer_temporal.mp4. Es una operacion bloqueante, por lo que debe
-     * invocarse desde un hilo distinto al de JavaFX Application Thread.
-     *
-     * Si el nodo actual no responde al PLAY inicial (timeout sin ningun
-     * paquete recibido), rota al siguiente nodo igual que hacen
-     * solicitarCatalogo y solicitarInfoPelicula. El SocketTimeoutException
-     * tras haber recibido datos sigue interpretandose como fin normal de
-     * la transferencia.
-     *
-     * @param rutaVideo identificador de la pelicula que espera NodoServidor.
-     * @param onPaquete callback opcional invocado por cada paquete UDP recibido, con el total acumulado. Puede ser null.
-     * @return la ruta absoluta del archivo descargado, o null si todos los nodos fallaron.
-     */
     public static String iniciarStreaming(String rutaVideo, IntConsumer onPaquete) {
         File archivoBuffer = new File("buffer_temporal.mp4");
         int intentos = 0;
@@ -136,7 +120,7 @@ public class ClienteRed {
                         socketUDP.receive(paquete);
                     } catch (java.net.SocketTimeoutException ste) {
                         if (paquetesRecibidos == 0) {
-                            // Timeout sin datos: el nodo no respondio al PLAY → rotar
+                            // Timeout sin datos: el nodo no respondio al PLAY -> rotar
                             throw ste;
                         }
                         // Timeout tras recibir datos: fin de transferencia normal

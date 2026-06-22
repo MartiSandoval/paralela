@@ -41,14 +41,6 @@ public class NodoServidor {
     // valor inicial hasta que la primera eleccion real lo reemplace).
     public static int coordinadorActual = 0;
     private volatile boolean esperandoOK = false;
-    /**
-     * Distinto de esperandoOK: esperandoOK solo cubre la ventana en la que
-     * se espera respuesta a un ELECTION propio. eleccionEnCurso cubre todo
-     * el proceso, desde que este nodo decide que el coordinador actual ya
-     * no es valido hasta que la eleccion se resuelve (gane este nodo u otro).
-     * Se usa solo para no seguir logueando "esperando latido del viejo
-     * coordinador" mientras la eleccion ya esta en marcha.
-     */
     private volatile boolean eleccionEnCurso = false;
     private long ultimoLatidoCoordinador = System.currentTimeMillis();
 
@@ -83,14 +75,6 @@ public class NodoServidor {
 
         System.out.println("[Nodo " + idNodo + "] Operando -> TCP: " + puertoTCP + " | UDP: " + puertoUDP);
 
-        // No se asume ningun coordinador de antemano: este nodo dispara su
-        // propia eleccion al arrancar, igual que si hubiera detectado un
-        // timeout. Asi, sin importar el orden en que se inicien los nodos,
-        // el de mayor ID entre los que esten realmente corriendo termina
-        // autoproclamandose coordinador via el mismo mecanismo de siempre.
-        // Se espera un momento antes de disparar la eleccion para darle
-        // tiempo al socket de coordinacion (escucharCoordinacion) a estar
-        // escuchando, ya que corre en su propio hilo recien lanzado arriba.
         new Thread(() -> {
             try {
                 Thread.sleep(500);
@@ -146,14 +130,6 @@ public class NodoServidor {
                 else if (comando.equals("ELECTION")) {
                     if (this.idNodo > idOrigen) {
                         enviarMensajeCoordinacion("OK;" + this.idNodo, idOrigen);
-                        // Siempre se responde OK al remitente de menor ID (eso
-                        // es necesario para que el ceda el paso), pero solo se
-                        // relanza el proceso completo de eleccion si no habia
-                        // una ya en marcha. Sin esta guarda, recibir ELECTION
-                        // de varios nodos en una ventana corta dispara
-                        // iniciarEleccion() multiples veces, duplicando logs
-                        // y dejando varios hilos de timeout de 3s corriendo
-                        // en paralelo sin necesidad.
                         if (!eleccionEnCurso) {
                             iniciarEleccion();
                         }

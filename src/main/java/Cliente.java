@@ -39,7 +39,7 @@ public class Cliente implements Runnable {
             out.flush();
 
         } catch (Exception e) {
-            // Ignoramos errores de I/O por desconexión en pruebas de carga masiva
+            // Ignoramos errores de E/S por desconexión en pruebas de carga masiva
         } finally {
             try { if (socketCliente != null) socketCliente.close(); } catch (Exception e) {}
         }

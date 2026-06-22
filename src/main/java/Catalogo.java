@@ -4,7 +4,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Catalogo {
     private List<Pelicula> peliculas = new CopyOnWriteArrayList<>();
-    // private List<String> recomendaciones = new CopyOnWriteArrayList<>();
 
     public Catalogo(ArrayList<String> lista_peliculas, int num_movies) {
         for(int i = 0; i < num_movies; i++) {

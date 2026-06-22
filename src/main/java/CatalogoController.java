@@ -22,10 +22,9 @@ public class CatalogoController {
     @FXML
     private Label lblOverlayCarga;
 
-    /** Escena del catalogo, guardada para poder volver a ella tras ver una pelicula. */
+    
     private Scene escenaCatalogo;
 
-    /** Tamano minimo original del Stage (el del catalogo), para restaurarlo al volver. */
     private double minAnchoCatalogo;
     private double minAltoCatalogo;
 
@@ -39,10 +38,6 @@ public class CatalogoController {
         cargarCatalogoEnSegundoPlano();
     }
 
-    /**
-     * Pide el catalogo al servidor en un hilo aparte (la llamada es bloqueante
-     * por sockets), y vuelve al hilo de JavaFX solo para actualizar la UI.
-     */
     private void cargarCatalogoEnSegundoPlano() {
         Thread hilo = new Thread(() -> {
             ArrayList<Pelicula> peliculas = ClienteRed.solicitarCatalogo();
@@ -90,12 +85,6 @@ public class CatalogoController {
         overlayCarga.setVisible(false);
     }
 
-    /**
-     * Inicia el streaming de la pelicula elegida en un hilo aparte (bloqueante),
-     * y cuando el archivo termina de descargarse, intenta abrir el reproductor
-     * en la misma ventana. El overlay de carga permanece visible durante toda
-     * la descarga UDP y mientras el reproductor termina de inicializarse.
-     */
     private void seleccionarPelicula(Pelicula p) {
         mostrarOverlay("Descargando " + p.getTitulo() + "...");
 
@@ -115,13 +104,6 @@ public class CatalogoController {
         hilo.start();
     }
 
-    /**
-     * Carga el FXML del reproductor y comienza a cargar el video. El cambio de
-     * escena solo ocurre cuando el reproductor confirma que esta listo
-     * (ReproductorController.setOnListo), nunca antes. Si se agotan los
-     * reintentos internos del reproductor, se vuelve a mostrar el catalogo
-     * con un mensaje de error en vez de quedarse en una pantalla en blanco.
-     */
     private void prepararReproductor(String rutaArchivo) {
         try {
             FXMLLoader fx = new FXMLLoader(getClass().getResource("/player/reproductor.fxml"));

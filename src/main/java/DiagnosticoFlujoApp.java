@@ -1,20 +1,5 @@
 import java.util.ArrayList;
 
-/*
-Harness de debug standalone para verificar la comunicacion con la red
-distribuida de NodoServidor, sin levantar la UI de JavaFX.
-
-No reimplementa nada de la logica de red: llama a los mismos metodos
-publicos de ClienteRed que usa la app real (MainApp/CatalogoController),
-para que el comportamiento que se prueba aca sea exactamente el mismo
-que ve el usuario final. Esto tambien significa que el logging de
-Lamport y la tolerancia a fallos por rotacion de nodos se ejercitan
-igual que en producción.
-
-Ejecucion: java PruebaNodos
-(o desde el IDE apuntando a esta clase como entry point puntual, sin
-tocar el mainClass configurado en pom.xml para MainApp)
-*/
 public class DiagnosticoFlujoApp {
 
     public static void main(String[] args) {

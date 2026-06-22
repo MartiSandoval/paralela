@@ -5,7 +5,7 @@ public class Mensaje implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private String operacion; 
-    private SealedObject payloadSeguro; // El contenido viaja blindado con AES
+    private SealedObject payloadSeguro; // El contenido viaja protegido con AES
     private int relojLamport; 
     private String idOrigen; 
 

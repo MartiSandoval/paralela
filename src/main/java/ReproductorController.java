@@ -21,15 +21,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class ReproductorController {
-
-    /**
-     * Mitigacion para un bug conocido de JavaFX MediaPlayer/GStreamer donde el
-     * video queda congelado en negro aunque el audio y el tiempo avancen
-     * normalmente. Forzar un seek breve apenas arranca la reproduccion fuerza
-     * al decodificador a resincronizar (es la version automatica de "mover el
-     * slider hacia atras"). Cuesta un parpadeo visible al inicio. Cambiar a
-     * false para comparar el comportamiento sin esta mitigacion.
-     */
     private static final boolean MITIGACION_SEEK_ACTIVA = true;
     private static final Duration SEEK_MITIGACION = Duration.millis(200);
 
@@ -199,11 +190,6 @@ public class ReproductorController {
         }
     }
 
-    /**
-     * Comienza a cargar la pelicula. El reproductor no queda operativo de
-     * inmediato: se notifica via setOnListo() cuando esta listo para
-     * mostrarse, o via setOnError() si se agotan los MAX_INTENTOS intentos.
-     */
     public void cargarPelicula(String path) {
         this.pathActual = path;
         this.intentoActual = 0;
@@ -212,10 +198,6 @@ public class ReproductorController {
 
     private void intentarCargar() {
         intentoActual++;
-
-        // Si un intento anterior dejo un MediaPlayer a medio inicializar, se descarta
-        // por completo antes de crear uno nuevo (es lo que "reabrir el reproductor"
-        // lograba manualmente: un MediaPlayer nuevo desde cero).
         if (mediaPlayer != null) {
             mediaPlayer.dispose();
             mediaPlayer = null;
@@ -248,8 +230,6 @@ public class ReproductorController {
         });
 
         mediaPlayer.setOnError(() -> {
-            // No se reintenta aqui directamente: se deja que el watchdog expire
-            // o, si ya esta corriendo, se fuerza el reintento de inmediato.
             watchdog.stop();
             if (intentoActual < MAX_INTENTOS) {
                 intentarCargar();
@@ -327,27 +307,11 @@ public class ReproductorController {
                 mediaPlayer.play();
             }
         });
-
-        // mediaView.fitWidth/fitHeight se bindean DIRECTAMENTE al StackPane raiz
-        // (root), no al contenedorVideo intermedio. La cadena anterior
-        // (mediaView -> contenedorVideo.width, con contenedorVideo.maxWidth
-        // atado a root.width) dependia de que JavaFX recalculara el layout
-        // del StackPane intermedio en cada resize, y en la practica esto no
-        // se invalidaba de forma confiable al ENCOGER la ventana (el video
-        // crecia bien pero no volvia a achicarse). Bindear directo a root,
-        // que siempre refleja el tamano real de la Scene, elimina esa
-        // dependencia intermedia.
         mediaView.fitWidthProperty().bind(root.widthProperty());
         mediaView.fitHeightProperty().bind(root.heightProperty());
         mediaView.setPreserveRatio(true);
     }
 
-    /**
-     * Fuerza al decodificador de video a resincronizar haciendo un seek breve
-     * hacia adelante y luego de vuelta al punto donde estaba. Es la version
-     * automatica de lo que el usuario descubrio que funciona manualmente:
-     * mover el slider "destraba" el primer frame congelado.
-     */
     private void aplicarMitigacionSeek() {
         Duration posicionOriginal = mediaPlayer.getCurrentTime();
         Duration duracionTotal = media.getDuration();
@@ -371,13 +335,6 @@ public class ReproductorController {
         espera.play();
     }
 
-    /**
-     * Pinta el track del slider con un relleno solido hasta el punto actual
-     * de reproduccion y gris en el resto, simulando una barra de progreso
-     * tipo YouTube/Spotify. El track solo existe una vez que el Slider ya
-     * fue renderizado al menos una vez, por eso se busca con lookup() en
-     * cada llamada en vez de guardarlo una sola vez.
-     */
     private void actualizarColorSlider() {
         Region track = (Region) slider.lookup(".track");
         if (track == null) {
@@ -394,12 +351,6 @@ public class ReproductorController {
         );
     }
 
-    /**
-     * Controles flotantes estilo YouTube: se ocultan tras un periodo sin
-     * movimiento de mouse, y reaparecen apenas el mouse se mueve sobre el
-     * reproductor. El listener de movimiento esta en la raiz (root), que
-     * cubre tanto el video como los propios controles.
-     */
     private void configurarAutoOcultamiento() {
         timerInactividad = new PauseTransition(TIEMPO_INACTIVIDAD);
         timerInactividad.setOnFinished(e -> ocultarOverlay());
@@ -433,8 +384,6 @@ public class ReproductorController {
     }
 
     private void ocultarOverlay() {
-        // No ocultar mientras esta pausado: el usuario necesita los controles
-        // visibles para reanudar, igual que en YouTube.
         if (!isPlaying) {
             return;
         }
@@ -451,11 +400,6 @@ public class ReproductorController {
         }
     }
 
-    /**
-     * Libera el MediaPlayer. Debe llamarse siempre que se abandona la pantalla
-     * del reproductor (volver al catalogo), para no dejar el video corriendo
-     * en memoria fuera de pantalla.
-     */
     public void liberar() {
         if (watchdog != null) {
             watchdog.stop();
